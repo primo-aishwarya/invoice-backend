@@ -116,13 +116,19 @@ app.post("/api/invoices", async (req, res) => {
         item.amount
       ]);
     }
+    const baseUrl = req.protocol + "://" + req.get("host");
 
     res.json({
       status: "success",
       invoice_id: invoiceId,
+      view_url: `${baseUrl}/api/get_invoice/${invoiceId}`
+    });
+   /* res.json({
+      status: "success",
+      invoice_id: invoiceId,
       view_url: `https://laurene-cracked-sterling.ngrok-free.dev/api/get_invoice/${invoiceId}`
     });
-
+*/
  } catch (error) {
 
     console.log(error);
