@@ -4,7 +4,8 @@ const db = mysql.createConnection({
   host: "dev-zilla.com",
   user: "u498357097_invoicemaker",
   password: "ayVILQzR05O^",
-  database: "u498357097_invoicemaker"
+  database: "u498357097_invoicemaker",
+  port: 3306
 });
 
 db.connect((err) => {
