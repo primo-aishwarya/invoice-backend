@@ -3,6 +3,7 @@ const cors = require("cors");
 const db = require("./config/db");
 // const db = require("./db");
 const app = express();
+const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 
 let invoices = {};
@@ -29,10 +30,9 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Invoice API Running");
 });
-const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
 });
 
 app.post("/api/invoices", async (req, res) => {
@@ -59,14 +59,15 @@ app.post("/api/invoices", async (req, res) => {
         message: "Invoice number already exists"
       });
     }
-
+    const password = crypto.randomBytes(6).toString("hex");
+    const publicToken = uuidv4();
     const invoiceQuery = `
     INSERT INTO invoice
     (invoice_number,purchase_order,freelancer, email, website_link, company_country,
     company_address, company_city, company_postal, company_state,
     client_business, client_email, client_phone, client_country,
-    client_address, client_city, client_state, date, total_amount,tax,discount,shipping_fee,due_date,account_detail,payment_terms)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
+    client_address, client_city, client_state, date, total_amount,tax,discount,shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
     const invoiceValues = [
         data.Invoice_number,
@@ -93,7 +94,10 @@ app.post("/api/invoices", async (req, res) => {
         data.Shipping,
         data.Due_date,
         data.Account_detail,
-        data.Payment_terms
+        data.Payment_terms,
+        data.Client_postal,
+        password,
+        publicToken
     ];
 
     const [result] = await db.promise().query(invoiceQuery, invoiceValues);
@@ -117,18 +121,16 @@ app.post("/api/invoices", async (req, res) => {
       ]);
     }
     const baseUrl = req.protocol + "://" + req.get("host");
-
+    const secureUrl = `${baseUrl}/api/get_invoice/${invoiceId}`;
+    const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
     res.json({
       status: "success",
       invoice_id: invoiceId,
-      view_url: `${baseUrl}/api/get_invoice/${invoiceId}`
+      password: password,
+      view_url: secureUrl,
+      public_url: publicUrl,
     });
-   /* res.json({
-      status: "success",
-      invoice_id: invoiceId,
-      view_url: `https://laurene-cracked-sterling.ngrok-free.dev/api/get_invoice/${invoiceId}`
-    });
-*/
+    // `https://laurene-cracked-sterling.ngrok-free.dev/api/get_invoice/${invoiceId}`,
  } catch (error) {
 
     console.log(error);
@@ -140,7 +142,53 @@ app.post("/api/invoices", async (req, res) => {
  }
 
 });
+app.get("/api/invoicedetail/:token", async (req, res) => {
 
+  try {
+
+    const token = req.params.token;
+    const password = req.headers["x-invoice-password"];
+
+    if (!password) {
+      return res.status(400).json({
+        message: "Password required"
+      });
+    }
+
+    const [invoice] = await db.promise().query(
+      "SELECT * FROM invoice WHERE public_token = ? AND password = ?",
+      [token, password]
+    );
+
+    if (invoice.length === 0) {
+      return res.status(403).json({
+        message: "Invalid password or link"
+      });
+    }
+
+    const invoiceId = invoice[0].id;
+
+    const [products] = await db.promise().query(
+      "SELECT * FROM products WHERE invoice = ?",
+      [invoiceId]
+    );
+
+    res.json({
+      invoice: invoice[0],
+      items: products
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+
+});
 app.get("/api/get_invoice/:id", (req, res) => {
 
   const id = req.params.id;
@@ -167,9 +215,11 @@ app.get("/api/get_invoice/:id", (req, res) => {
       if (err) {
         return res.status(500).json(err);
       }
-
+      const baseUrl = req.protocol + "://" + req.get("host");
       invoice.items = productResult;
-
+      const publicUrl = `${baseUrl}/invoicedetail/${invoice.public_token}`;
+      invoice.publicUrl = publicUrl;
+      invoice.publicToken = invoice.public_token;
       res.json(invoice);
 
     });
