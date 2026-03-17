@@ -8,11 +8,11 @@ const mysql = require("mysql2");
   port: 3306
 });*/
 const db = mysql.createConnection({
-  host: "mysql.railway.internal",
+  host: "junction.proxy.rlwy.net",
   user: "root",
   password: "JjWgQBZSRgswbflieUJQLpsYtiCCtsyk",
   database: "railway",
-  port: 3306
+  port: 43001
 });
 
 
