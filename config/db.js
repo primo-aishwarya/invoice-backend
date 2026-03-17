@@ -17,26 +17,18 @@ const mysql = require("mysql2");
   port: 43001
 });*/
 // hostinger
-/*const db = mysql.createConnection({
+const db = mysql.createConnection({
   host: "srv1098.hstgr.io",
   user: "u498357097_invoicemaker",
   password: "ayVILQzR05O^",
   database: "u498357097_invoicemaker",
-  port: 43001,
-  connectTimeout: 20000
-});*/
-
-
-const db = mysql.createPool({
-  host: "srv1098.hstgr.io",
-  user: "u498357097_invoicemaker",
-  password: "ayVILQzR05O",
-  database: "u498357097_invoicemaker",
   port: 3306,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  connectTimeout: 20000
 });
+
 
 
 db.connect((err) => {
