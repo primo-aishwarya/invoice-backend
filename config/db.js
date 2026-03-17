@@ -26,7 +26,6 @@ const mysql = require("mysql2");
   connectTimeout: 20000
 });*/
 
-const mysql = require("mysql2");
 
 const db = mysql.createPool({
   host: "srv1098.hstgr.io",
