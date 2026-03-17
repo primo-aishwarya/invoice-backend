@@ -7,12 +7,22 @@ const mysql = require("mysql2");
   database: "u498357097_invoicemaker",
   port: 43001
 });*/
-const db = mysql.createConnection({
+
+// railway
+/*const db = mysql.createConnection({
   host: "junction.proxy.rlwy.net",
   user: "root",
   password: "JjWgQBZSRgswbflieUJQLpsYtiCCtsyk",
   database: "railway",
   port: 43001
+});*/
+// hostinger
+const db = mysql.createConnection({
+  host: "194.59.164.73",
+  user: "u498357097_invoicemaker",
+  password: "ayVILQzR05O^",
+  database: "u498357097_invoicemaker",
+  port: 3306
 });
 
 
