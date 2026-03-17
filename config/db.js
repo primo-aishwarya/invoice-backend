@@ -9,15 +9,15 @@ const mysql = require("mysql2");
 });*/
 
 // railway
-/*const db = mysql.createConnection({
+const db = mysql.createConnection({
   host: "junction.proxy.rlwy.net",
   user: "root",
   password: "JjWgQBZSRgswbflieUJQLpsYtiCCtsyk",
   database: "railway",
   port: 43001
-});*/
+});
 // hostinger
-const db = mysql.createConnection({
+/*const db = mysql.createConnection({
   host: "srv1098.hstgr.io",
   user: "u498357097_invoicemaker",
   password: "ayVILQzR05O^",
@@ -29,7 +29,7 @@ const db = mysql.createConnection({
   connectTimeout: 20000
 });
 
-
+*/
 
 db.connect((err) => {
   if (err) {
