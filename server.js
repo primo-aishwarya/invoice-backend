@@ -1,13 +1,10 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./config/db");
-// const db = require("./db");
 const app = express();
 const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 
-let invoices = {};
-// app.use(cors());
 const allowedOrigins = [
   'http://localhost:5173',
   'https://dev-zilla.com',
@@ -25,6 +22,7 @@ app.use(cors({
   methods: ["GET","POST","PUT","DELETE","PATCH"],
   allowedHeaders: ["Content-Type","Authorization","ngrok-skip-browser-warning"]
 }));
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -35,20 +33,18 @@ app.listen(5000, () => {
   console.log("Server running on port 5000");
 });
 
+
+// ================= CREATE INVOICE =================
 app.post("/api/invoices", async (req, res) => {
-
  try {
-
     const data = req.body;
 
-    // 1️⃣ Items empty check
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
         message: "Invoice must contain at least one item"
       });
     }
 
-    // 2️⃣ Duplicate invoice number check
     const [checkInvoice] = await db.promise().query(
       "SELECT id FROM invoice WHERE invoice_number = ?",
       [data.Invoice_number]
@@ -59,17 +55,19 @@ app.post("/api/invoices", async (req, res) => {
         message: "Invoice number already exists"
       });
     }
+
     const password = crypto.randomBytes(6).toString("hex");
     const publicToken = uuidv4();
-    const invoiceQuery = `
-    INSERT INTO invoice
-    (invoice_number,purchase_order,freelancer, email, website_link, company_country,
-    company_address, company_city, company_postal, company_state,
-    client_business, client_email, client_phone, client_country,
-    client_address, client_city, client_state, date, total_amount,tax,discount,shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`;
 
-    const invoiceValues = [
+    const [result] = await db.promise().query(
+      `INSERT INTO invoice
+      (invoice_number,purchase_order,freelancer,email,website_link,company_country,
+      company_address,company_city,company_postal,company_state,
+      client_business,client_email,client_phone,client_country,
+      client_address,client_city,client_state,date,total_amount,tax,discount,
+      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
         data.Invoice_number,
         data.Purchase_order,
         data.Freelancer,
@@ -98,61 +96,51 @@ app.post("/api/invoices", async (req, res) => {
         data.Client_postal,
         password,
         publicToken
-    ];
-
-    const [result] = await db.promise().query(invoiceQuery, invoiceValues);
+      ]
+    );
 
     const invoiceId = result.insertId;
 
-    // 3️⃣ Insert products
+    // insert products
     for (let item of data.items) {
-
-      const itemQuery = `
-      INSERT INTO products
-      (invoice, description, unit_cost, quantity, amount)
-      VALUES (?,?,?,?,?)`;
-
-      await db.promise().query(itemQuery, [
-        invoiceId,
-        item.description,
-        item.cost,
-        item.quantity,
-        item.amount
-      ]);
+      await db.promise().query(
+        `INSERT INTO products (invoice, description, unit_cost, quantity, amount)
+         VALUES (?,?,?,?,?)`,
+        [
+          invoiceId,
+          item.description,
+          item.cost,
+          item.quantity,
+          item.amount
+        ]
+      );
     }
+
     const baseUrl = req.protocol + "://" + req.get("host");
-    const secureUrl = `${baseUrl}/api/get_invoice/${invoiceId}`;
-    const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
+
     res.json({
       status: "success",
       invoice_id: invoiceId,
       password: password,
-      view_url: secureUrl,
-      public_url: publicUrl,
+      view_url: `${baseUrl}/api/get_invoice/${invoiceId}`,
+      public_url: `${baseUrl}/invoicedetail/${publicToken}`,
     });
-    // `https://laurene-cracked-sterling.ngrok-free.dev/api/get_invoice/${invoiceId}`,
+
  } catch (error) {
-
     console.log(error);
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    res.status(500).json({ message: error.message });
  }
-
 });
+
+
+// ================= PUBLIC INVOICE =================
 app.get("/api/invoicedetail/:token", async (req, res) => {
-
   try {
-
     const token = req.params.token;
     const password = req.headers["x-invoice-password"];
 
     if (!password) {
-      return res.status(400).json({
-        message: "Password required"
-      });
+      return res.status(400).json({ message: "Password required" });
     }
 
     const [invoice] = await db.promise().query(
@@ -179,28 +167,21 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
     });
 
   } catch (error) {
-
     console.log(error);
-
-    res.status(500).json({
-      message: error.message
-    });
-
+    res.status(500).json({ message: error.message });
   }
-
 });
-app.get("/api/get_invoice/:id", (req, res) => {
 
-  const id = req.params.id;
 
-  const invoiceSql = "SELECT * FROM invoice WHERE id = ?";
-  const productSql = "SELECT * FROM products WHERE invoice = ?";
+// ================= GET INVOICE =================
+app.get("/api/get_invoice/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
 
-  db.query(invoiceSql, [id], (err, invoiceResult) => {
-
-    if (err) {
-      return res.status(500).json(err);
-    }
+    const [invoiceResult] = await db.promise().query(
+      "SELECT * FROM invoice WHERE id = ?",
+      [id]
+    );
 
     if (invoiceResult.length === 0) {
       return res.status(404).json({
@@ -208,37 +189,34 @@ app.get("/api/get_invoice/:id", (req, res) => {
       });
     }
 
+    const [productResult] = await db.promise().query(
+      "SELECT * FROM products WHERE invoice = ?",
+      [id]
+    );
+
     const invoice = invoiceResult[0];
 
-    db.query(productSql, [id], (err, productResult) => {
+    const baseUrl = req.protocol + "://" + req.get("host");
 
-      if (err) {
-        return res.status(500).json(err);
-      }
-      const baseUrl = req.protocol + "://" + req.get("host");
-      invoice.items = productResult;
-      const publicUrl = `${baseUrl}/invoicedetail/${invoice.public_token}`;
-      invoice.publicUrl = publicUrl;
-      invoice.publicToken = invoice.public_token;
-      res.json(invoice);
+    invoice.items = productResult;
+    invoice.publicUrl = `${baseUrl}/invoicedetail/${invoice.public_token}`;
+    invoice.publicToken = invoice.public_token;
 
-    });
+    res.json(invoice);
 
-  });
-
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.get("/api/countries", (req, res) => {
 
-  const id = req.params.id;
-
-  const sql = "SELECT country_name,id FROM countries";
-
-  db.query(sql, (err, result) => {
-
-    if (err) {
-      return res.status(500).json(err);
-    }
+// ================= COUNTRIES =================
+app.get("/api/countries", async (req, res) => {
+  try {
+    const [result] = await db.promise().query(
+      "SELECT country_name,id FROM countries"
+    );
 
     if (result.length === 0) {
       return res.status(404).json({
@@ -247,5 +225,9 @@ app.get("/api/countries", (req, res) => {
     }
 
     res.json(result);
-  });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
 });
