@@ -22,7 +22,7 @@ const db = mysql.createConnection({
   user: "u498357097_invoicemaker",
   password: "ayVILQzR05O^",
   database: "u498357097_invoicemaker",
-  port: 3306,
+  port: 43001,
   connectTimeout: 20000
 });
 
