@@ -8,10 +8,10 @@ const mysql = require("mysql2");
   port: 3306
 });*/
 const db = mysql.createConnection({
-  host: "72.167.143.225",
-  user: "odgtv1_invoice",
-  password: "invoice@123^",
-  database: "odgtv1_invoice",
+  host: "mysql.railway.internal",
+  user: "root",
+  password: "JjWgQBZSRgswbflieUJQLpsYtiCCtsyk",
+  database: "railway",
   port: 3306
 });
 
