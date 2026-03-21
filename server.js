@@ -164,8 +164,8 @@ app.post("/api/invoices",authMiddleware, async (req, res) => {
       company_address,company_city,company_postal,company_state,
       client_business,client_email,client_phone,client_country,
       client_address,client_city,client_state,date,total_amount,tax,discount,
-      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      shipping_fee,due_date,account_detail,payment_terms,client_postal,public_token)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         data.Invoice_number,
         data.Purchase_order,
@@ -193,7 +193,7 @@ app.post("/api/invoices",authMiddleware, async (req, res) => {
         data.Account_detail,
         data.Payment_terms,
         data.Client_postal,
-        password,
+        // password,
         publicToken
       ]
     );
