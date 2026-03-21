@@ -4,6 +4,8 @@ const db = require("./config/db");
 const app = express();
 const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -31,6 +33,38 @@ app.get("/", (req, res) => {
 
 app.listen(5000, () => {
   console.log("Server running on port 5000");
+});
+/*=====================login=====================*/
+
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const [user] = await db.promise().query(
+    "SELECT * FROM users WHERE email = ?",
+    [email]
+  );
+
+  if (user.length === 0) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const bcrypt = require("bcrypt");
+  const match = await bcrypt.compare(password, user[0].password);
+
+  if (!match) {
+    return res.status(401).json({ message: "Invalid password" });
+  }
+
+  const token = jwt.sign(
+    { id: user[0].user_id, email: user[0].email },
+    "SECRET_KEY",
+    { expiresIn: "7d" }
+  );
+
+  res.json({
+    token,
+    user: user[0]
+  });
 });
 
 /*========================registration=================*/
