@@ -12,6 +12,22 @@ const allowedOrigins = [
   'https://dev-zilla.com',
 ];
 
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ message: "Token missing" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, "SECRET_KEY");
+    req.user = decoded; // user id 
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token" });
+  }
+};
+
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -118,7 +134,7 @@ app.post("/api/register", async (req, res) => {
 
 
 // ================= CREATE INVOICE =================
-app.post("/api/invoices", async (req, res) => {
+app.post("/api/invoices",authMiddleware, async (req, res) => {
  try {
     const data = req.body;
 
