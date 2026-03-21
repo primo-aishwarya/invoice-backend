@@ -137,6 +137,7 @@ app.post("/api/register", async (req, res) => {
 app.post("/api/invoices",authMiddleware, async (req, res) => {
  try {
     const data = req.body;
+    const userId = req.user.id;
 
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
@@ -160,14 +161,15 @@ app.post("/api/invoices",authMiddleware, async (req, res) => {
 
     const [result] = await db.promise().query(
       `INSERT INTO invoice
-      (invoice_number,purchase_order,freelancer,email,website_link,company_country,
+      (invoice_number,user_id,purchase_order,freelancer,email,website_link,company_country,
       company_address,company_city,company_postal,company_state,
       client_business,client_email,client_phone,client_country,
       client_address,client_city,client_state,date,total_amount,tax,discount,
-      shipping_fee,due_date,account_detail,payment_terms,client_postal,public_token)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         data.Invoice_number,
+        userId,
         data.Purchase_order,
         data.Freelancer,
         data.email,
@@ -193,12 +195,16 @@ app.post("/api/invoices",authMiddleware, async (req, res) => {
         data.Account_detail,
         data.Payment_terms,
         data.Client_postal,
-        // password,
+        password,
         publicToken
       ]
     );
 
     const invoiceId = result.insertId;
+
+    const [history] = await db.promise().query(
+      `INSERT INTO history(user_id,invoice_id,type_of_history)
+      VALUES (?,?,?)`,[userId,result.insertId,invoice created]);
 
     // insert products
     for (let item of data.items) {
