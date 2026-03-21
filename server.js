@@ -336,3 +336,134 @@ app.get("/api/countries", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+/*=============update invoice==================*/
+
+app.put("/api/update_invoices/:id", async (req, res) => {
+
+  try {
+
+    const invoiceId = req.params.id;
+    const data = req.body;
+
+    if (!data.items || data.items.length === 0) {
+      return res.status(400).json({
+        message: "Invoice must contain at least one item"
+      });
+    }
+
+    // 1️⃣ Check invoice exists
+    const [check] = await db.promise().query(
+      "SELECT id FROM invoice WHERE id = ?",
+      [invoiceId]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({
+        message: "Invoice not found"
+      });
+    }
+
+    // 2️⃣ Update invoice
+    const updateQuery = `
+    UPDATE invoice SET
+    invoice_number = ?,
+    purchase_order = ?,
+    freelancer = ?,
+    email = ?,
+    website_link = ?,
+    company_country = ?,
+    company_address = ?,
+    company_city = ?,
+    company_postal = ?,
+    company_state = ?,
+    client_business = ?,
+    client_email = ?,
+    client_phone = ?,
+    client_country = ?,
+    client_address = ?,
+    client_city = ?,
+    client_state = ?,
+    date = ?,
+    total_amount = ?,
+    tax = ?,
+    discount = ?,
+    shipping_fee = ?,
+    due_date = ?,
+    account_detail = ?,
+    payment_terms = ?,
+    client_postal = ?
+    WHERE id = ?
+    `;
+
+    const values = [
+      data.Invoice_number,
+      data.Purchase_order,
+      data.Freelancer,
+      data.email,
+      data.Website_link,
+      data.CompanyCountry,
+      data.Company_address,
+      data.Company_city,
+      data.Company_postal,
+      data.Company_state,
+      data.Client_business,
+      data.Client_email,
+      data.Client_phone,
+      data.ClientCountry,
+      data.Client_address,
+      data.Client_city,
+      data.Client_state,
+      data.Invoice_date,
+      data.totalAmount,
+      data.GST,
+      data.Discount,
+      data.Shipping,
+      data.Due_date,
+      data.Account_detail,
+      data.Payment_terms,
+      data.Client_postal,
+      invoiceId
+    ];
+
+    await db.promise().query(updateQuery, values);
+
+    // 3️⃣ Delete old products
+    await db.promise().query(
+      "DELETE FROM products WHERE invoice = ?",
+      [invoiceId]
+    );
+
+    // 4️⃣ Insert updated products
+    for (let item of data.items) {
+
+      const itemQuery = `
+      INSERT INTO products
+      (invoice, description, unit_cost, quantity, amount)
+      VALUES (?,?,?,?,?)`;
+
+      await db.promise().query(itemQuery, [
+        invoiceId,
+        item.description,
+        item.cost,
+        item.quantity,
+        item.amount
+      ]);
+    }
+
+    res.json({
+      status: "success",
+      message: "Invoice updated successfully"
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message
+    });
+
+  }
+
+});
