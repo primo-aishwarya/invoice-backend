@@ -39,7 +39,7 @@ app.post("/api/register", async (req, res) => {
   try {
     const { fullname, email, phone, password, cpassword } = req.body;
 
-    if (!fullname || !email || !phone || !password || !cpassword) {
+    if (!fullname || !email || !password || !cpassword) {
       return res.status(400).json({
         message: "All fields are required"
       });
@@ -52,13 +52,13 @@ app.post("/api/register", async (req, res) => {
     }
 
     const [existingUser] = await db.promise().query(
-      "SELECT user_id FROM users WHERE email = ? OR phone = ?",
-      [email, phone]
+      "SELECT user_id FROM users WHERE email = ?",
+      [email]
     );
 
     if (existingUser.length > 0) {
       return res.status(400).json({
-        message: "Email or phone already registered"
+        message: "Email already registered"
       });
     }
 
