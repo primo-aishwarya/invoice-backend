@@ -66,7 +66,7 @@ app.post("/api/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await db.promise().query(
-      "INSERT INTO users (name, email, phone, password) VALUES (?,?,?,?)",
+      "INSERT INTO users (fullname, email, phone, password) VALUES (?,?,?,?)",
       [fullname, email, phone, hashedPassword]
     );
 
