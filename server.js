@@ -35,7 +35,6 @@ app.listen(5000, () => {
 
 /*========================registration=================*/
 
-// ================= REGISTER =================
 app.post("/api/register", async (req, res) => {
   try {
     const { fullname, email, phone, password, cpassword } = req.body;
@@ -53,7 +52,7 @@ app.post("/api/register", async (req, res) => {
     }
 
     const [existingUser] = await db.promise().query(
-      "SELECT id FROM users WHERE email = ? OR phone = ?",
+      "SELECT user_id FROM users WHERE email = ? OR phone = ?",
       [email, phone]
     );
 
