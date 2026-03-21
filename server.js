@@ -33,6 +33,56 @@ app.listen(5000, () => {
   console.log("Server running on port 5000");
 });
 
+/*========================registration=================*/
+
+// ================= REGISTER =================
+app.post("/api/register", async (req, res) => {
+  try {
+    const { fullname, email, phone, password, cpassword } = req.body;
+
+    if (!fullname || !email || !phone || !password || !cpassword) {
+      return res.status(400).json({
+        message: "All fields are required"
+      });
+    }
+
+    if (password !== cpassword) {
+      return res.status(400).json({
+        message: "Password and Confirm Password do not match"
+      });
+    }
+
+    const [existingUser] = await db.promise().query(
+      "SELECT id FROM users WHERE email = ? OR phone = ?",
+      [email, phone]
+    );
+
+    if (existingUser.length > 0) {
+      return res.status(400).json({
+        message: "Email or phone already registered"
+      });
+    }
+
+    const bcrypt = require("bcrypt");
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [result] = await db.promise().query(
+      "INSERT INTO users (name, email, phone, password) VALUES (?,?,?,?)",
+      [fullname, email, phone, hashedPassword]
+    );
+
+    res.json({
+      status: "success",
+      message: "User registered successfully",
+      user_id: result.insertId
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 // ================= CREATE INVOICE =================
 app.post("/api/invoices", async (req, res) => {
