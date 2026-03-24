@@ -38,7 +38,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ["GET","POST","PUT","DELETE","PATCH"],
-  allowedHeaders: ["Content-Type","Authorization","ngrok-skip-browser-warning"]
+  allowedHeaders: ["Content-Type","Authorization","x-invoice-password","ngrok-skip-browser-warning"]
 }));
 
 app.use(express.json());
@@ -259,18 +259,26 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
       });
     }
 
-    const invoiceId = invoice[0].id;
+    const invoice = invoiceResult[0];
+    const invoiceId = invoice.id;
 
     const [products] = await db.promise().query(
       "SELECT * FROM products WHERE invoice = ?",
       [invoiceId]
     );
 
-    res.json({
+    /*res.json({
       invoice: invoice[0],
       items: products
     });
+*/
+    const baseUrl = req.protocol + "://" + req.get("host");
 
+    invoice.items = products;
+    invoice.publicUrl = `${baseUrl}/invoicedetail/${invoice.public_token}`;
+    invoice.publicToken = invoice.public_token;
+
+    res.json(invoice);
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });
@@ -339,12 +347,13 @@ app.get("/api/countries", async (req, res) => {
 
 /*=============update invoice==================*/
 
-app.put("/api/update_invoices/:id", async (req, res) => {
+app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
 
   try {
 
     const invoiceId = req.params.id;
     const data = req.body;
+    const userId = req.user.id;
 
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
@@ -393,8 +402,7 @@ app.put("/api/update_invoices/:id", async (req, res) => {
     account_detail = ?,
     payment_terms = ?,
     client_postal = ?
-    WHERE id = ?
-    `;
+    WHERE id = ?`;
 
     const values = [
       data.Invoice_number,
@@ -428,13 +436,11 @@ app.put("/api/update_invoices/:id", async (req, res) => {
 
     await db.promise().query(updateQuery, values);
 
-    // 3️⃣ Delete old products
     await db.promise().query(
       "DELETE FROM products WHERE invoice = ?",
       [invoiceId]
     );
 
-    // 4️⃣ Insert updated products
     for (let item of data.items) {
 
       const itemQuery = `
@@ -450,6 +456,10 @@ app.put("/api/update_invoices/:id", async (req, res) => {
         item.amount
       ]);
     }
+
+    const [history] = await db.promise().query(
+      `INSERT INTO history(user_id,invoice_id,type_of_history)
+      VALUES (?,?,?)`,[userId,invoiceId,'invoice updated.']);
 
     res.json({
       status: "success",
