@@ -373,6 +373,17 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
       });
     }
 
+    const [existing] = await db.promise().query(
+      "SELECT id FROM invoice WHERE invoice_number = ? AND id != ?",
+      [data.Invoice_number, invoiceId]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({
+        message: "Invoice number already exists"
+      });
+    }
+
     // 2️⃣ Update invoice
     const updateQuery = `
     UPDATE invoice SET
