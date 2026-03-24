@@ -375,7 +375,7 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
 
     const [existing] = await db.promise().query(
       "SELECT id FROM invoice WHERE invoice_number = ? AND id != ?",
-      [data.Invoice_number, invoiceId]
+      [data.invoice_number, invoiceId]
     );
 
     if (existing.length > 0) {
@@ -416,32 +416,32 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
     WHERE id = ?`;
 
     const values = [
-      data.Invoice_number,
-      data.Purchase_order,
-      data.Freelancer,
+      data.invoice_number,
+      data.purchase_order,
+      data.freelancer,
       data.email,
-      data.Website_link,
-      data.CompanyCountry,
-      data.Company_address,
-      data.Company_city,
-      data.Company_postal,
-      data.Company_state,
-      data.Client_business,
-      data.Client_email,
-      data.Client_phone,
-      data.ClientCountry,
-      data.Client_address,
-      data.Client_city,
-      data.Client_state,
-      data.Invoice_date,
-      data.totalAmount,
-      data.GST,
-      data.Discount,
-      data.Shipping,
-      data.Due_date,
-      data.Account_detail,
-      data.Payment_terms,
-      data.Client_postal,
+      data.website_link,
+      data.company_country,
+      data.company_address,
+      data.company_city,
+      data.company_postal,
+      data.company_state,
+      data.client_business,
+      data.client_email,
+      data.client_phone,
+      data.client_country,
+      data.client_address,
+      data.client_city,
+      data.client_state,
+      data.date,
+      data.total_amount,
+      data.tax,
+      data.discount,
+      data.shipping_fee,
+      data.due_date,
+      data.account_detail,
+      data.payment_terms,
+      data.client_postal,
       invoiceId
     ];
 
@@ -462,7 +462,7 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
       await db.promise().query(itemQuery, [
         invoiceId,
         item.description,
-        item.cost,
+        item.unit_cost,
         item.quantity,
         item.amount
       ]);
