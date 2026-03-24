@@ -248,12 +248,12 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
       return res.status(400).json({ message: "Password required" });
     }
 
-    const [invoice] = await db.promise().query(
+    const [invoiceResult] = await db.promise().query(
       "SELECT * FROM invoice WHERE public_token = ? AND password = ?",
       [token, password]
     );
 
-    if (invoice.length === 0) {
+    if (invoiceResult.length === 0) {
       return res.status(403).json({
         message: "Invalid password or link"
       });
