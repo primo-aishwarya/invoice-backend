@@ -475,5 +475,4 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
     });
 
   }
-
 });
