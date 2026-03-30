@@ -489,7 +489,7 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
   }
 });
 
-
+/*=================user Invoice======================*/
 app.get("/api/invoice-list", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -524,6 +524,56 @@ app.get("/api/invoice-list", authMiddleware, async (req, res) => {
     res.json({
       status: "success",
       data: invoices
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: error.message
+    });
+  }
+});
+
+/*===============delete invoice======================*/
+app.delete("/api/delete-invoice/:id", authMiddleware, async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    const userId = req.user.id;
+
+    // Check invoice exists & belongs to user
+    const [invoice] = await db.promise().query(
+      "SELECT id FROM invoice WHERE id = ? AND user_id = ?",
+      [invoiceId, userId]
+    );
+
+    if (invoice.length === 0) {
+      return res.status(404).json({
+        message: "Invoice not found or unauthorized"
+      });
+    }
+
+    // Delete products first (FK issue avoid)
+    await db.promise().query(
+      "DELETE FROM products WHERE invoice = ?",
+      [invoiceId]
+    );
+
+    // Delete invoice
+    await db.promise().query(
+      "DELETE FROM invoice WHERE id = ?",
+      [invoiceId]
+    );
+
+    // Add history (optional)
+    await db.promise().query(
+      `INSERT INTO history(user_id,invoice_id,type_of_history)
+       VALUES (?,?,?)`,
+      [userId, invoiceId, 'invoice deleted']
+    );
+
+    res.json({
+      status: "success",
+      message: "Invoice deleted successfully"
     });
 
   } catch (error) {
