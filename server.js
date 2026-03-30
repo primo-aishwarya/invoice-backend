@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174',
   'https://dev-zilla.com',
 ];
 
