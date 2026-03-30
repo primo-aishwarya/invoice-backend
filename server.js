@@ -488,3 +488,48 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
 
   }
 });
+
+
+app.get("/api/invoice-list", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get invoices of logged-in user
+    const [invoices] = await db.promise().query(
+      "SELECT * FROM invoice WHERE user_id = ? ORDER BY id DESC",
+      [userId]
+    );
+
+    if (invoices.length === 0) {
+      return res.json({
+        status: "success",
+        message: "No invoices found",
+        data: []
+      });
+    }
+
+    // Loop & attach products for each invoice
+    for (let invoice of invoices) {
+      const [products] = await db.promise().query(
+        "SELECT * FROM products WHERE invoice = ?",
+        [invoice.id]
+      );
+
+      invoice.items = products;
+
+      const baseUrl = req.protocol + "://" + req.get("host");
+      invoice.publicUrl = `${baseUrl}/invoicedetail/${invoice.public_token}`;
+    }
+
+    res.json({
+      status: "success",
+      data: invoices
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: error.message
+    });
+  }
+});
