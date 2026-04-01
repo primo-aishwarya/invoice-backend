@@ -351,13 +351,14 @@ app.get("/api/countries", async (req, res) => {
 
 /*=============update invoice==================*/
 
-app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
+app.put("/api/update_invoices/:id", async (req, res) => {
 
   try {
 
     const invoiceId = req.params.id;
     const data = req.body;
-    const userId = req.user.id;
+    // const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
 
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
@@ -365,7 +366,7 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
       });
     }
 
-    // 1️⃣ Check invoice exists
+    // Check invoice exists
     const [check] = await db.promise().query(
       "SELECT id FROM invoice WHERE id = ?",
       [invoiceId]
@@ -388,7 +389,7 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
       });
     }
 
-    // 2️⃣ Update invoice
+    // Update invoice
     const updateQuery = `
     UPDATE invoice SET
     invoice_number = ?,
@@ -471,10 +472,13 @@ app.put("/api/update_invoices/:id",authMiddleware, async (req, res) => {
         item.amount
       ]);
     }
-
-    const [history] = await db.promise().query(
+    if(userId!=null)
+    {
+      const [history] = await db.promise().query(
       `INSERT INTO history(user_id,invoice_id,type_of_history)
       VALUES (?,?,?)`,[userId,invoiceId,'invoice updated.']);
+    }
+    
 
     res.json({
       status: "success",
