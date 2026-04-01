@@ -202,10 +202,13 @@ app.post("/api/invoices", async (req, res) => {
     );
 
     const invoiceId = result.insertId;
-
-    const [history] = await db.promise().query(
+    if(userId!=null)
+    {
+        const [history] = await db.promise().query(
       `INSERT INTO history(user_id,invoice_id,type_of_history)
       VALUES (?,?,?)`,[userId,result.insertId,'invoice created']);
+    }
+    
 
     // insert products
     for (let item of data.items) {
