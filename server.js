@@ -135,10 +135,10 @@ app.post("/api/register", async (req, res) => {
 
 
 // ================= CREATE INVOICE =================
-app.post("/api/invoices",authMiddleware, async (req, res) => {
+app.post("/api/invoices", async (req, res) => {
  try {
     const data = req.body;
-    const userId = req.user.id;
+    const userId = req.user ? req.user.id : null;
 
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
