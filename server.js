@@ -13,6 +13,25 @@ const allowedOrigins = [
   'https://dev-zilla.com',
 ];
 
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    req.user = null; // guest user
+    return next();
+  }
+
+  try {
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, "SECRET_KEY");
+    req.user = decoded;
+  } catch (err) {
+    req.user = null; // invalid token bhi ignore
+  }
+
+  next();
+};
+
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization;
 
@@ -135,7 +154,7 @@ app.post("/api/register", async (req, res) => {
 
 
 // ================= CREATE INVOICE =================
-app.post("/api/invoices", async (req, res) => {
+app.post("/api/invoices",optionalAuth, async (req, res) => {
  try {
     const data = req.body;
     const userId = req.user ? req.user.id : null;
