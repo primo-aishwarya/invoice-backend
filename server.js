@@ -379,7 +379,7 @@ app.get("/api/countries", async (req, res) => {
 
 /*=============update invoice==================*/
 
-app.put("/api/update_invoices/:id", async (req, res) => {
+app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
 
   try {
 
