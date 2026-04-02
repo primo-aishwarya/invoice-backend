@@ -17,16 +17,25 @@ const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    req.user = null; // guest user
+    req.user = null;
     return next();
   }
 
   try {
-    const token = authHeader.split(" ")[1];
+    let token;
+
+    if (authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1]; // Bearer token
+    } else {
+      token = authHeader; // direct token (old method)
+    }
+
     const decoded = jwt.verify(token, "SECRET_KEY");
     req.user = decoded;
+
   } catch (err) {
-    req.user = null; // invalid token bhi ignore
+    console.log("JWT ERROR:", err.message);
+    req.user = null;
   }
 
   next();
