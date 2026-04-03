@@ -357,7 +357,7 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
  }
 });
 
-app.get("/test-mail", async (req, res) => {
+app.get("/api/test-mail", async (req, res) => {
   try {
     await transporter.sendMail({
       from: '"Test" <primo.aishwaryabairagi@gmail.com>',
