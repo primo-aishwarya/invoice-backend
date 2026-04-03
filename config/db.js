@@ -24,8 +24,6 @@
   database: "u498357097_invoicemaker",
   port: 3306
 });
-
-
 db.connect((err) => {
   if (err) {
     console.log("Database connection failed", err);
@@ -33,12 +31,11 @@ db.connect((err) => {
     console.log("MySQL Connected");
   }
 });
-
 module.exports = db;*/
 
 const mysql = require("mysql2");
 
-// ✅ Create Pool (auto reconnect handle karega)
+//  Create Pool (auto reconnect handle karega)
 const db = mysql.createPool({
   host: "srv1098.hstgr.io",
   user: "u498357097_invoicemaker",
@@ -53,7 +50,7 @@ const db = mysql.createPool({
   connectTimeout: 20000
 });
 
-// ✅ Test connection (startup pe)
+//  Test connection (startup pe)
 db.getConnection((err, connection) => {
   if (err) {
     console.error("Database connection failed ❌", err);
@@ -63,7 +60,7 @@ db.getConnection((err, connection) => {
   }
 });
 
-// ✅ Runtime error handle (VERY IMPORTANT)
+//  Runtime error handle (VERY IMPORTANT)
 db.on("error", (err) => {
   console.error("MySQL runtime error:", err);
 

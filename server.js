@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const transporter = require("./config/mail");
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -160,7 +161,66 @@ app.post("/api/register", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+// ===============
 
+const senderTemplate = (data, publicUrl) => {
+  return `
+  <div style="font-family: Arial; background:#f4f6f8; padding:20px;">
+    <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:8px;">
+      
+      <h2 style="color:#2c3e50;">Invoice Sent Successfully </h2>
+      
+      <p>Hello <b>${data.Freelancer || "User"}</b>,</p>
+      
+      <p>Your invoice <b>#${data.Invoice_number}</b> has been successfully sent to <b>${data.Client_email}</b>.</p>
+      
+      <p>You can view the invoice anytime using the link below:</p>
+      
+      <a href="${publicUrl}" style="display:inline-block; padding:10px 20px; background:#3498db; color:#fff; text-decoration:none; border-radius:5px;">
+        View Invoice
+      </a>
+
+      <p style="margin-top:20px;">Thank you for using our platform.</p>
+      
+      <hr>
+      <small>Invoice System</small>
+    </div>
+  </div>
+  `;
+};
+
+const receiverTemplate = (data, publicUrl, password) => {
+  return `
+  <div style="font-family: Arial; background:#f4f6f8; padding:20px;">
+    <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:8px;">
+      
+      <h2 style="color:#2c3e50;">New Invoice Received 📄</h2>
+      
+      <p>Hello,</p>
+      
+      <p>You have received a new invoice from <b>${data.Freelancer}</b>.</p>
+      
+      <p><b>Invoice No:</b> ${data.Invoice_number}</p>
+      <p><b>Amount:</b> ₹${data.totalAmount}</p>
+
+      <p>You can view your invoice using the link below:</p>
+
+      <a href="${publicUrl}" style="display:inline-block; padding:10px 20px; background:#27ae60; color:#fff; text-decoration:none; border-radius:5px;">
+        View Invoice
+      </a>
+
+      <p style="margin-top:15px;">
+        <b>Password:</b> ${password}
+      </p>
+
+      <p style="margin-top:20px;">Please review and process it.</p>
+      
+      <hr>
+      <small>Invoice System</small>
+    </div>
+  </div>
+  `;
+};
 
 // ================= CREATE INVOICE =================
 app.post("/api/invoices",optionalAuth, async (req, res) => {
@@ -254,6 +314,26 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     }
 
     const baseUrl = req.protocol + "://" + req.get("host");
+
+
+    const baseUrl = req.protocol + "://" + req.get("host");
+    // const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
+
+    // Send mail to sender
+    await transporter.sendMail({
+      from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
+      to: data.email, // sender email
+      subject: "Invoice Sent Successfully",
+      html: senderTemplate(data, publicUrl)
+    });
+
+    // Send mail to receiver
+    await transporter.sendMail({
+      from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
+      to: data.Client_email,
+      subject: "You Received a New Invoice",
+      html: receiverTemplate(data, publicUrl, password)
+    });
 
     res.json({
       status: "success",
@@ -406,6 +486,7 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       });
     }
 
+<<<<<<< Updated upstream
     const [existing] = await db.promise().query(
       "SELECT id FROM invoice WHERE invoice_number = ? AND id != ?",
       [data.invoice_number, invoiceId]
@@ -417,6 +498,8 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       });
     }
 
+=======
+>>>>>>> Stashed changes
     // Update invoice
     const updateQuery = `
     UPDATE invoice SET
@@ -485,6 +568,10 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       [invoiceId]
     );
 
+<<<<<<< Updated upstream
+=======
+    // Insert updated products
+>>>>>>> Stashed changes
     for (let item of data.items) {
 
       const itemQuery = `
