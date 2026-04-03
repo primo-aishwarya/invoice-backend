@@ -486,7 +486,6 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       });
     }
 
-<<<<<<< Updated upstream
     const [existing] = await db.promise().query(
       "SELECT id FROM invoice WHERE invoice_number = ? AND id != ?",
       [data.invoice_number, invoiceId]
@@ -498,8 +497,6 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       });
     }
 
-=======
->>>>>>> Stashed changes
     // Update invoice
     const updateQuery = `
     UPDATE invoice SET
@@ -568,10 +565,7 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       [invoiceId]
     );
 
-<<<<<<< Updated upstream
-=======
     // Insert updated products
->>>>>>> Stashed changes
     for (let item of data.items) {
 
       const itemQuery = `
