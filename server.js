@@ -357,6 +357,22 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
  }
 });
 
+app.get("/test-mail", async (req, res) => {
+  try {
+    await transporter.sendMail({
+      from: '"Test" <primo.aishwaryabairagi@gmail.com>',
+      to: "primo.aishwaryabairagi@gmail.com@gmail.com",
+      subject: "Test Mail",
+      text: "Working fine"
+    });
+
+    res.send("Mail sent");
+  } catch (err) {
+    console.log(err);
+    res.send("Error");
+  }
+});
+
 
 // ================= PUBLIC INVOICE =================
 app.get("/api/invoicedetail/:token", async (req, res) => {
