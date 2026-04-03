@@ -356,7 +356,6 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     res.status(500).json({ message: error.message });
  }
 });
-
 app.get("/api/test-mail", async (req, res) => {
   try {
     await transporter.sendMail({
