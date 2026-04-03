@@ -254,8 +254,8 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
       company_address,company_city,company_postal,company_state,
       client_business,client_email,client_phone,client_country,
       client_address,client_city,client_state,date,total_amount,tax,discount,
-      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token,currency_name,currency_symbol)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         data.Invoice_number,
         userId,
@@ -285,7 +285,9 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
         data.Payment_terms,
         data.Client_postal,
         password,
-        publicToken
+        publicToken,
+        data.Currency_name,
+        data.Currency_symbol,
       ]
     );
 
@@ -548,7 +550,9 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
     due_date = ?,
     account_detail = ?,
     payment_terms = ?,
-    client_postal = ?
+    client_postal = ?,
+    currency_name = ?,
+    currency_symbol = ?
     WHERE id = ?`;
 
     const values = [
@@ -578,6 +582,8 @@ app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
       data.account_detail,
       data.payment_terms,
       data.client_postal,
+      data.currency_name,
+      data.currency_symbol,
       invoiceId
     ];
 
