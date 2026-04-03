@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const transporter = require("./config/mail");
+const sgMail = require("./config/mail");
 
 const allowedOrigins = [
   'http://localhost:5173',

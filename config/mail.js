@@ -1,15 +1,5 @@
-const nodemailer = require("nodemailer");
+const sgMail = require("@sendgrid/mail");
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: "primo.aishwaryabairagi@gmail.com",
-    pass: "wbdvxextsssyyytb"
-  },
-  connectionTimeout: 10000, // 10 sec
-  greetingTimeout: 10000
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-module.exports = transporter;
+module.exports = sgMail;
