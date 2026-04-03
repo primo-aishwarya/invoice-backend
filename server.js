@@ -194,7 +194,7 @@ const receiverTemplate = (data, publicUrl, password) => {
   <div style="font-family: Arial; background:#f4f6f8; padding:20px;">
     <div style="max-width:600px; margin:auto; background:#fff; padding:25px; border-radius:8px;">
       
-      <h2 style="color:#2c3e50;">New Invoice Received 📄</h2>
+      <h2 style="color:#2c3e50;">New Invoice Received </h2>
       
       <p>Hello,</p>
       
@@ -316,7 +316,7 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     const baseUrl = req.protocol + "://" + req.get("host");
 
 
-    const baseUrl = req.protocol + "://" + req.get("host");
+    // const baseUrl = req.protocol + "://" + req.get("host");
     // const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
     // Send mail to sender
