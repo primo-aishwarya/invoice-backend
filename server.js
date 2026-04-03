@@ -318,32 +318,34 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     const baseUrl = req.protocol + "://" + req.get("host");
     const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
-    try {
-      const senderMail = await transporter.sendMail({
-        from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
+    // 🚀 Fire & forget mail (no crash)
+    setImmediate(() => {
+
+      // Sender mail
+      sgMail.send({
         to: data.email,
+        from: process.env.EMAIL_USER,
         subject: "Invoice Sent Successfully",
-        html: senderTemplate(data, publicUrl)
+        html: senderTemplate(data, publicUrl),
+      }).then(() => {
+        console.log("Sender mail sent");
+      }).catch(err => {
+        console.log("Sender mail error:", err.message);
       });
 
-      console.log("Sender mail sent:", senderMail.response);
-
-    } catch (err) {
-      console.log("Sender mail error:", err);
-    }
-    try {
-      // Send mail to receiver
-      const receiverMail = await transporter.sendMail({
-        from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
+      // Receiver mail
+      sgMail.send({
         to: data.Client_email,
+        from: process.env.EMAIL_USER,
         subject: "You Received a New Invoice",
-        html: receiverTemplate(data, publicUrl, password)
+        html: receiverTemplate(data, publicUrl, password),
+      }).then(() => {
+        console.log("Receiver mail sent");
+      }).catch(err => {
+        console.log("Receiver mail error:", err.message);
       });
-      console.log("Sender mail sent:", senderMail.response);
 
-    } catch (err) {
-      console.log("Sender mail error:", err);
-    }
+    });
 
     res.json({
       status: "success",
