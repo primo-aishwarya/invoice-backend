@@ -316,21 +316,32 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     const baseUrl = req.protocol + "://" + req.get("host");
     const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
-    // Send mail to sender
-    await transporter.sendMail({
-      from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
-      to: data.email, // sender email
-      subject: "Invoice Sent Successfully",
-      html: senderTemplate(data, publicUrl)
-    });
+    try {
+      const senderMail = await transporter.sendMail({
+        from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
+        to: data.email,
+        subject: "Invoice Sent Successfully",
+        html: senderTemplate(data, publicUrl)
+      });
 
-    // Send mail to receiver
-    await transporter.sendMail({
-      from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
-      to: data.Client_email,
-      subject: "You Received a New Invoice",
-      html: receiverTemplate(data, publicUrl, password)
-    });
+      console.log("Sender mail sent:", senderMail.response);
+
+    } catch (err) {
+      console.log("Sender mail error:", err);
+    }
+    try {
+      // Send mail to receiver
+      const receiverMail = await transporter.sendMail({
+        from: '"Invoice App" <primo.aishwaryabairagi@gmail.com>',
+        to: data.Client_email,
+        subject: "You Received a New Invoice",
+        html: receiverTemplate(data, publicUrl, password)
+      });
+      console.log("Sender mail sent:", senderMail.response);
+
+    } catch (err) {
+      console.log("Sender mail error:", err);
+    }
 
     res.json({
       status: "success",
