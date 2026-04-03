@@ -375,20 +375,6 @@ app.get("/api/test-mail", async (req, res) => {
         console.log("Sender mail error:", err.message);
       });
     });
-
-  /*try {
-    await transporter.sendMail({
-      from: '"Test" <primo.aishwaryabairagi@gmail.com>',
-      to: "primo.aishwaryabairagi@gmail.com@gmail.com",
-      subject: "Test Mail",
-      text: "Working fine"
-    });
-
-    res.send("Mail sent");
-  } catch (err) {
-    console.log(err);
-    res.send("Error");
-  }*/
 });
 
 
