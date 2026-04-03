@@ -314,6 +314,7 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     }
 
     const baseUrl = req.protocol + "://" + req.get("host");
+    const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
     // Send mail to sender
     await transporter.sendMail({
