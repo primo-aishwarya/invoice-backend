@@ -361,7 +361,23 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
  }
 });
 app.get("/api/test-mail", async (req, res) => {
-  try {
+  setImmediate(() => {
+
+      // Sender mail
+      sgMail.send({
+        to: data.email,
+        from: process.env.EMAIL_USER,
+        subject: "Invoice Sent Successfully",
+        text: "Working fine"
+      }).then(() => {
+        console.log("Sender mail sent");
+      }).catch(err => {
+        console.log("Sender mail error:", err.message);
+      });
+    });
+
+
+  /*try {
     await transporter.sendMail({
       from: '"Test" <primo.aishwaryabairagi@gmail.com>',
       to: "primo.aishwaryabairagi@gmail.com@gmail.com",
@@ -373,7 +389,7 @@ app.get("/api/test-mail", async (req, res) => {
   } catch (err) {
     console.log(err);
     res.send("Error");
-  }
+  }*/
 });
 
 
