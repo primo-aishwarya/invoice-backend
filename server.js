@@ -366,8 +366,8 @@ app.get("/api/test-mail", async (req, res) => {
 
       // Sender mail
       sgMail.send({
-        to: 'prim.aishwaryabairagi@gmail.com',
-        from: process.env.EMAIL_USER,
+        to: 'primo.aishwaryabairagi@gmail.com',
+        from: 'primo.aishwaryabairagi@gmail.com',
         subject: "Invoice Sent Successfully",
         text: "Working fine"
       }).then(() => {
