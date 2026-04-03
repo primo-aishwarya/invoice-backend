@@ -320,7 +320,7 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
     const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
     // 🚀 Fire & forget mail (no crash)
-    setImmediate(() => {
+    /*setImmediate(() => {
 
       // Sender mail
       sgMail.send({
@@ -346,7 +346,7 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
         console.log("Receiver mail error:", err.message);
       });
 
-    });
+    });*/
 
     res.json({
       status: "success",
