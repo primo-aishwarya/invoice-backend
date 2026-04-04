@@ -373,7 +373,7 @@ app.get("/api/test-mail", async (req, res) => {
       }).then(() => {
         console.log("Sender mail sent");
       }).catch(err => {
-        console.log("Sender mail error:", err.message);
+        console.log("Full error:", err.response?.body || err);
       });
     });
 });
