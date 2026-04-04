@@ -362,6 +362,7 @@ app.post("/api/invoices",optionalAuth, async (req, res) => {
  }
 });
 app.get("/api/test-mail", async (req, res) => {
+  console.log("KEY:", process.env.SENDGRID_API_KEY);
   setImmediate(() => {
 
       // Sender mail
