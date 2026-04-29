@@ -16,6 +16,7 @@ const allowedOrigins = [
   'https://invoicelabs.in'
 ];
 
+
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
