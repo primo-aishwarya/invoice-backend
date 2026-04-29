@@ -13,7 +13,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'https://dev-zilla.com',
-  'https://invoicelabs.in '
+  'https://invoicelabs.in'
 ];
 
 const optionalAuth = (req, res, next) => {
