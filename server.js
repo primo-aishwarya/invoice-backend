@@ -13,6 +13,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'https://dev-zilla.com',
+  'https://invoicelabs.in '
 ];
 
 const optionalAuth = (req, res, next) => {
@@ -367,7 +368,7 @@ app.get("/api/test-mail", async (req, res) => {
 
       // Sender mail
       sgMail.send({
-        to: 'primo.aishwaryabairagi@gmail.com',
+        to: 'aishubmct399@gmail.com',
         from: 'primo.aishwaryabairagi@gmail.com',
         subject: "Invoice Sent Successfully",
         text: "Working fine"
