@@ -328,7 +328,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
         publicToken,
         data.Currency_name,
         data.Currency_symbol,
-        data.logo
+        logo
       ]
     );
 
