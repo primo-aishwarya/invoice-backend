@@ -402,6 +402,21 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     res.status(500).json({ message: error.message });
  }
 });
+app.post("api/test-img", upload.single("logo"), async (req, res) => {
+ try {
+    const data = req.body;
+    const logo = req.file ? req.file.filename : null;
+    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
+    res.json({
+      status: "success",
+      logo_url: logoUrl
+    });
+
+ } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+ }
+});
 app.get("/api/test-mail", async (req, res) => {
   console.log("KEY:", process.env.SENDGRID_API_KEY);
   setImmediate(() => {
