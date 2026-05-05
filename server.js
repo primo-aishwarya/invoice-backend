@@ -402,7 +402,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     res.status(500).json({ message: error.message });
  }
 });
-app.post("api/test-img", upload.single("logo"), async (req, res) => {
+app.post("/api/test-img", upload.single("logo"), async (req, res) => {
  try {
     const data = req.body;
     const logo = req.file ? req.file.filename : null;
