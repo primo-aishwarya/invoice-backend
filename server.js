@@ -9,6 +9,44 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const sgMail = require("./config/mail");
 
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const dir = "uploads/invoices";
+
+if (!fs.existsSync(dir)) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+
+// storage config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/invoices/");
+  },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
+});
+// file filter (only images)
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only JPG, PNG, WEBP images allowed"), false);
+  }
+};
+// multer setup with size limit (e.g. 2MB)
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2MB
+  }
+});
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -226,7 +264,7 @@ const receiverTemplate = (data, publicUrl, password) => {
 };
 
 // ================= CREATE INVOICE =================
-app.post("/api/invoices",optionalAuth, async (req, res) => {
+app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) => {
  try {
     const data = req.body;
     const userId = req.user ? req.user.id : null;
@@ -734,4 +772,17 @@ app.delete("/api/delete-invoice/:id", authMiddleware, async (req, res) => {
       message: error.message
     });
   }
+});
+
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      message: err.message
+    });
+  } else if (err) {
+    return res.status(400).json({
+      message: err.message
+    });
+  }
+  next();
 });
