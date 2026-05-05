@@ -135,7 +135,6 @@ app.post("/api/login", async (req, res) => {
     return res.status(404).json({ message: "User not found" });
   }
 
-  const bcrypt = require("bcrypt");
   const match = await bcrypt.compare(password, user[0].password);
 
   if (!match) {
@@ -183,7 +182,6 @@ app.post("/api/register", async (req, res) => {
       });
     }
 
-    const bcrypt = require("bcrypt");
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const [result] = await db.promise().query(
@@ -268,6 +266,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
  try {
     const data = req.body;
     const userId = req.user ? req.user.id : null;
+    const logo = req.file ? req.file.filename : null;
 
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
@@ -295,8 +294,8 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
       company_address,company_city,company_postal,company_state,
       client_business,client_email,client_phone,client_country,
       client_address,client_city,client_state,date,total_amount,tax,discount,
-      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token,currency_name,currency_symbol)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token,currency_name,currency_symbol,logo)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         data.Invoice_number,
         userId,
@@ -329,6 +328,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
         publicToken,
         data.Currency_name,
         data.Currency_symbol,
+        data.logo
       ]
     );
 
@@ -387,13 +387,14 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
       });
 
     });*/
-
+    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
     res.json({
       status: "success",
       invoice_id: invoiceId,
       password: password,
       view_url: `${baseUrl}/api/get_invoice/${invoiceId}`,
       public_url: `${baseUrl}/invoicedetail/${publicToken}`,
+      logo_url: logoUrl
     });
 
  } catch (error) {
