@@ -14,8 +14,12 @@ const path = require("path");
 const fs = require("fs");
 const dir = "uploads/invoices";
 
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
+try {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+} catch (err) {
+  console.log("Folder create error:", err.message);
 }
 
 // storage config
@@ -118,8 +122,10 @@ app.get("/", (req, res) => {
   res.send("Invoice API Running");
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 /*=====================login=====================*/
 
