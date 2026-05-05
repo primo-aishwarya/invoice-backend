@@ -267,7 +267,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     const data = req.body;
     const userId = req.user ? req.user.id : null;
     const logo = req.file ? req.file.filename : null;
-
+    const baseUrl = req.protocol + "://" + req.get("host");
     if (!data.items || data.items.length === 0) {
       return res.status(400).json({
         message: "Invoice must contain at least one item"
@@ -287,15 +287,15 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
 
     const password = crypto.randomBytes(6).toString("hex");
     const publicToken = uuidv4();
-
+    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
     const [result] = await db.promise().query(
       `INSERT INTO invoice
       (invoice_number,user_id,purchase_order,freelancer,email,website_link,company_country,
       company_address,company_city,company_postal,company_state,
       client_business,client_email,client_phone,client_country,
       client_address,client_city,client_state,date,total_amount,tax,discount,
-      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token,currency_name,currency_symbol,logo)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      shipping_fee,due_date,account_detail,payment_terms,client_postal,password,public_token,currency_name,currency_symbol,logo,logo_url)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         data.Invoice_number,
         userId,
@@ -328,7 +328,8 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
         publicToken,
         data.Currency_name,
         data.Currency_symbol,
-        logo
+        logo,
+        logoUrl
       ]
     );
 
@@ -356,7 +357,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
       );
     }
 
-    const baseUrl = req.protocol + "://" + req.get("host");
+    
     const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
     // 🚀 Fire & forget mail (no crash)
@@ -387,7 +388,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
       });
 
     });*/
-    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
+    
     res.json({
       status: "success",
       invoice_id: invoiceId,
@@ -402,22 +403,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     res.status(500).json({ message: error.message });
  }
 });
-app.post("/api/test-img", upload.single("logo"), async (req, res) => {
- try {
-    const data = req.body;
-    const logo = req.file ? req.file.filename : null;
-    const baseUrl = req.protocol + "://" + req.get("host");
-    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
-    res.json({
-      status: "success",
-      logo_url: logoUrl
-    });
 
- } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error.message });
- }
-});
 app.get("/api/test-mail", async (req, res) => {
   console.log("KEY:", process.env.SENDGRID_API_KEY);
   setImmediate(() => {
@@ -546,7 +532,7 @@ app.get("/api/countries", async (req, res) => {
 
 /*=============update invoice==================*/
 
-app.put("/api/update_invoices/:id",optionalAuth, async (req, res) => {
+app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (req, res) => {
 
   try {
 
