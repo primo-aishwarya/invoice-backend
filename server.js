@@ -13,7 +13,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const dir = "uploads/invoices";
-
+const baseUrl = req.protocol + "://" + req.get("host");
 if (!fs.existsSync(dir)) {
   fs.mkdirSync(dir, { recursive: true });
 }
