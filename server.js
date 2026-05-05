@@ -13,7 +13,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const dir = "uploads/invoices";
-const baseUrl = req.protocol + "://" + req.get("host");
+
 if (!fs.existsSync(dir)) {
   fs.mkdirSync(dir, { recursive: true });
 }
@@ -406,6 +406,7 @@ app.post("/api/test-img", upload.single("logo"), async (req, res) => {
  try {
     const data = req.body;
     const logo = req.file ? req.file.filename : null;
+    const baseUrl = req.protocol + "://" + req.get("host");
     const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
     res.json({
       status: "success",
