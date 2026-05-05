@@ -559,6 +559,8 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
       });
     }
 
+    const oldInvoice = check[0];
+
     const [existing] = await db.promise().query(
       "SELECT id FROM invoice WHERE invoice_number = ? AND id != ?",
       [data.invoice_number, invoiceId]
@@ -569,6 +571,30 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
         message: "Invoice number already exists"
       });
     }
+
+    const baseUrl = req.protocol + "://" + req.get("host");
+
+    //  logo handling
+    let finalLogo = oldInvoice.logo;
+    let finalLogoUrl = oldInvoice.logo_url;
+
+    if (req.file) {
+      const newLogo = req.file.filename;
+
+      finalLogo = newLogo;
+      finalLogoUrl = `${baseUrl}/uploads/invoices/${newLogo}`;
+
+      // old logo delete
+      if (oldInvoice.logo) {
+        const fs = require("fs");
+        const oldPath = `uploads/invoices/${oldInvoice.logo}`;
+
+        if (fs.existsSync(oldPath)) {
+          fs.unlinkSync(oldPath);
+        }
+      }
+    }
+
 
     // Update invoice
     const updateQuery = `
@@ -600,7 +626,9 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
     payment_terms = ?,
     client_postal = ?,
     currency_name = ?,
-    currency_symbol = ?
+    currency_symbol = ?,
+    logo = ?,
+    logo_url = ?
     WHERE id = ?`;
 
     const values = [
@@ -632,6 +660,8 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
       data.client_postal,
       data.currency_name,
       data.currency_symbol,
+      finalLogo,
+      finalLogoUrl,
       invoiceId
     ];
 
