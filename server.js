@@ -427,7 +427,22 @@ app.get("/api/test-mail", async (req, res) => {
       });
     });
 });
+app.post("/api/test-img", upload.single("logo"), async (req, res) => {
+ try {
+    const data = req.body;
+    const logo = req.file ? req.file.filename : null;
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
+    res.json({
+      status: "success",
+      logo_url: logoUrl
+    });
 
+ } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: error.message });
+ }
+});
 
 // ================= PUBLIC INVOICE =================
 app.get("/api/invoicedetail/:token", async (req, res) => {
