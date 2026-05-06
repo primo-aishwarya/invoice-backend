@@ -13,6 +13,9 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const dir = "uploads/invoices";
+const axios = require("axios");
+const FormData = require("form-data");
+
 
 try {
   if (!fs.existsSync(dir)) {
@@ -50,6 +53,28 @@ const upload = multer({
     fileSize: 2 * 1024 * 1024 // 2MB
   }
 });
+
+async function uploadToRemoteServer(filePath) {
+  const form = new FormData();
+
+  form.append("file", fs.createReadStream(filePath));
+
+  try {
+    const response = await axios.post(
+      "https://invoicelabs.in/uploads/invoices",
+      form,
+      {
+        headers: form.getHeaders(),
+        timeout: 15000
+      }
+    );
+
+    return response.data;
+  } catch (err) {
+    console.log("Upload error:", err.message);
+    throw err;
+  }
+}
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -270,11 +295,32 @@ const receiverTemplate = (data, publicUrl, password) => {
 // ================= CREATE INVOICE =================
 app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) => {
  try {
+    let logo = null;
+    let logoUrl = null;
+    if (req.file) {
+    try {
+        const uploadRes = await uploadToRemoteServer(req.file.path);
+
+        logoUrl = uploadRes.file_url;
+        logo = uploadRes.file_name || null;
+
+        fs.unlinkSync(req.file.path);
+      } catch (err) {
+        return res.status(500).json({
+          message: "Image upload failed"
+        });
+      }
+    }
     const data = req.body;
     const userId = req.user ? req.user.id : null;
-    const logo = req.file ? req.file.filename : null;
-    const baseUrl = req.protocol + "://" + req.get("host");
-    if (!data.items || data.items.length === 0) {
+    // const logo = req.file ? req.file.filename : null;
+    // const baseUrl = req.protocol + "://" + req.get("host");
+
+    let items = data.items;
+    if (typeof items === "string") {
+      items = JSON.parse(items);
+    }
+    if (!items || items.length === 0) {
       return res.status(400).json({
         message: "Invoice must contain at least one item"
       });
@@ -293,7 +339,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
 
     const password = crypto.randomBytes(6).toString("hex");
     const publicToken = uuidv4();
-    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
+    // const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
     const [result] = await db.promise().query(
       `INSERT INTO invoice
       (invoice_number,user_id,purchase_order,freelancer,email,website_link,company_country,
@@ -349,7 +395,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     
 
     // insert products
-    for (let item of data.items) {
+    for (let item of items)
       await db.promise().query(
         `INSERT INTO products (invoice, description, unit_cost, quantity, amount)
          VALUES (?,?,?,?,?)`,
@@ -428,22 +474,27 @@ app.get("/api/test-mail", async (req, res) => {
     });
 });
 app.post("/api/test-img", upload.single("logo"), async (req, res) => {
- try {
-    const data = req.body;
-    const logo = req.file ? req.file.filename : null;
-    const baseUrl = req.protocol + "://" + req.get("host");
-    const logoUrl = logo ? `${baseUrl}/uploads/invoices/${logo}` : null;
+  try {
+
+    let logoUrl = null;
+
+    if (req.file) {
+      const uploadRes = await uploadToRemoteServer(req.file.path);
+      logoUrl = uploadRes.file_url;
+
+      fs.unlinkSync(req.file.path);
+    }
+
     res.json({
       status: "success",
       logo_url: logoUrl
     });
 
- } catch (error) {
+  } catch (error) {
     console.log(error);
     res.status(500).json({ message: error.message });
- }
+  }
 });
-
 // ================= PUBLIC INVOICE =================
 app.get("/api/invoicedetail/:token", async (req, res) => {
   try {
@@ -570,7 +621,7 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
 
     // Check invoice exists
     const [check] = await db.promise().query(
-      "SELECT id FROM invoice WHERE id = ?",
+      "SELECT * FROM invoice WHERE id = ?",
       [invoiceId]
     );
 
@@ -607,7 +658,6 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
 
       // old logo delete
       if (oldInvoice.logo) {
-        const fs = require("fs");
         const oldPath = `uploads/invoices/${oldInvoice.logo}`;
 
         if (fs.existsSync(oldPath)) {
@@ -829,7 +879,6 @@ app.delete("/api/delete-invoice/:id", authMiddleware, async (req, res) => {
 });
 
 app.get("/check-files", (req, res) => {
-  const fs = require("fs");
 
   fs.readdir("uploads/invoices", (err, files) => {
     if (err) return res.json({ error: err.message });
