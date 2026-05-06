@@ -322,9 +322,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     }
     const data = req.body;
     const userId = req.user ? req.user.id : null;
-    // const logo = req.file ? req.file.filename : null;
-    // const baseUrl = req.protocol + "://" + req.get("host");
-
+   
     let items = data.items;
     if (typeof items === "string") {
       items = JSON.parse(items);
