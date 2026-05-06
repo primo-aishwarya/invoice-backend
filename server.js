@@ -15,7 +15,7 @@ const fs = require("fs");
 const dir = "uploads/invoices";
 const axios = require("axios");
 const FormData = require("form-data");
-
+const ftp = require("basic-ftp");
 
 try {
   if (!fs.existsSync(dir)) {
@@ -53,6 +53,37 @@ const upload = multer({
     fileSize: 2 * 1024 * 1024 // 2MB
   }
 });
+
+
+async function uploadToFTP(localPath, fileName) {
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
+
+  try {
+    await client.access({
+      host: "invoicelabs.in",
+      user: "u575800587.abhishek",
+      password: "9M$Lk:m7/>0t",
+      secure: false // FTP = false, FTPS = true
+    });
+
+    const remotePath = `/uploads/invoices/${fileName}`;
+
+    await client.uploadFrom(localPath, remotePath);
+
+    client.close();
+
+    return {
+      file_url: `https://invoicelabs.in/uploads/invoices/${fileName}`,
+      file_name: fileName
+    };
+
+  } catch (err) {
+    client.close();
+    console.log("FTP error:", err);
+    throw err;
+  }
+}
 
 async function uploadToRemoteServer(filePath) {
   const form = new FormData();
