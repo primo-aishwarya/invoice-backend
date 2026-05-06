@@ -640,7 +640,11 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
     // const userId = req.user.id;
     const userId = req.user ? req.user.id : null;
 
-    if (!data.items || data.items.length === 0) {
+    let items = data.items;
+    if (typeof items === "string") {
+      items = JSON.parse(items);
+    }
+    if (!items || items.length === 0) {
       return res.status(400).json({
         message: "Invoice must contain at least one item"
       });
@@ -771,8 +775,8 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
     );
 
     // Insert updated products
-    for (let item of data.items) {
-
+    for (let item of items)
+    {
       const itemQuery = `
       INSERT INTO products
       (invoice, description, unit_cost, quantity, amount)
