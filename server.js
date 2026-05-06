@@ -13,8 +13,6 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const dir = "uploads/invoices";
-const axios = require("axios");
-const FormData = require("form-data");
 const ftp = require("basic-ftp");
 
 try {
@@ -58,7 +56,7 @@ const upload = multer({
 async function uploadToFTP(localPath, fileName) {
   const client = new ftp.Client();
   client.ftp.verbose = false;
-
+  client.ftp.timeout = 10000; // 10 sec
   try {
     await client.access({
       host: "invoicelabs.in",
@@ -85,27 +83,6 @@ async function uploadToFTP(localPath, fileName) {
   }
 }
 
-async function uploadToRemoteServer(filePath) {
-  const form = new FormData();
-
-  form.append("file", fs.createReadStream(filePath));
-
-  try {
-    const response = await axios.post(
-      "https://invoicelabs.in/uploads/invoices",
-      form,
-      {
-        headers: form.getHeaders(),
-        timeout: 15000
-      }
-    );
-
-    return response.data;
-  } catch (err) {
-    console.log("Upload error:", err.message);
-    throw err;
-  }
-}
 
 const allowedOrigins = [
   'http://localhost:5173',
@@ -330,15 +307,16 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     let logoUrl = null;
     if (req.file) {
     try {
-        const uploadRes = await uploadToRemoteServer(req.file.path);
-
+        const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
         logoUrl = uploadRes.file_url;
         logo = uploadRes.file_name || null;
 
-        fs.unlinkSync(req.file.path);
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }      
       } catch (err) {
         return res.status(500).json({
-          message: "Image upload failed"
+          message: err.message
         });
       }
     }
@@ -439,7 +417,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
         ]
       );
     }
-
+    const baseUrl = req.protocol + "://" + req.get("host");
     
     const publicUrl = `${baseUrl}/invoicedetail/${publicToken}`;
 
@@ -510,7 +488,7 @@ app.post("/api/test-img", upload.single("logo"), async (req, res) => {
     let logoUrl = null;
 
     if (req.file) {
-      const uploadRes = await uploadToRemoteServer(req.file.path);
+      const uploadRes = await uploadToFTP(req.file.path, req.file.filename);      
       logoUrl = uploadRes.file_url;
 
       fs.unlinkSync(req.file.path);
@@ -682,19 +660,15 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
     let finalLogoUrl = oldInvoice.logo_url;
 
     if (req.file) {
-      const newLogo = req.file.filename;
+      const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
 
-      finalLogo = newLogo;
-      finalLogoUrl = `${baseUrl}/uploads/invoices/${newLogo}`;
+      finalLogo = uploadRes.file_name;
+      finalLogoUrl = uploadRes.file_url;
 
-      // old logo delete
-      if (oldInvoice.logo) {
-        const oldPath = `uploads/invoices/${oldInvoice.logo}`;
-
-        if (fs.existsSync(oldPath)) {
-          fs.unlinkSync(oldPath);
-        }
-      }
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }      
+      await client.remove(`/uploads/invoices/${oldInvoice.logo}`);
     }
 
 
