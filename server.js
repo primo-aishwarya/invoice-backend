@@ -306,7 +306,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
     let logo = null;
     let logoUrl = null;
     if (req.file) {
-    try {
+      try {
         const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
         logoUrl = uploadRes.file_url;
         logo = uploadRes.file_name || null;
@@ -405,6 +405,7 @@ app.post("/api/invoices",optionalAuth, upload.single("logo"), async (req, res) =
 
     // insert products
     for (let item of items)
+    {
       await db.promise().query(
         `INSERT INTO products (invoice, description, unit_cost, quantity, amount)
          VALUES (?,?,?,?,?)`,
