@@ -52,7 +52,26 @@ const upload = multer({
   }
 });
 
+async function deleteFromFTP(fileName) {
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
 
+  try {
+    await client.access({
+      host: "invoicelabs.in",
+      user: "u575800587.abhishek",
+      password: "9M$Lk:m7/>0t",
+      secure: false
+    });
+
+    await client.remove(`/uploads/invoices/${fileName}`);
+
+    client.close();
+  } catch (err) {
+    client.close();
+    console.log("FTP delete error:", err.message);
+  }
+}
 async function uploadToFTP(localPath, fileName) {
   const client = new ftp.Client();
   client.ftp.verbose = false;
@@ -666,8 +685,12 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
 
       if (fs.existsSync(req.file.path)) {
         fs.unlinkSync(req.file.path);
-      }      
-      await client.remove(`/uploads/invoices/${oldInvoice.logo}`);
+      }
+
+      //  old file delete karo (safe way)
+      if (oldInvoice.logo) {
+        await deleteFromFTP(oldInvoice.logo);
+      }
     }
 
 
