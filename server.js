@@ -607,7 +607,7 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
   }
 });*/
 
-app.get("/api/get_invoice/:id", optionalAuth, async (req, res) => {
+app.get("/api/get_invoice/:id", async (req, res) => {
 
   try {
 
