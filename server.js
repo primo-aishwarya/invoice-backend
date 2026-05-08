@@ -634,7 +634,8 @@ app.get("/api/countries", async (req, res) => {
 app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (req, res) => {
 
   try {
-
+    console.log(req.body);
+console.log(req.body.items);
     const invoiceId = req.params.id;
     const data = req.body;
     // const userId = req.user.id;
