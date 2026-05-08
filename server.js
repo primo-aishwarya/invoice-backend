@@ -133,7 +133,7 @@ const checkInvoiceAccess = async (req, res, next) => {
     req.invoice = invoice;
 
     // private invoice
-    if (invoice.user_id) {
+    if (invoice.user_id != null) {
 
       if (!req.user) {
         return res.status(401).json({
