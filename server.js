@@ -571,7 +571,7 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
 
 
 // ================= GET INVOICE =================
-app.get("/api/get_invoice/:id",authMiddleware, async (req, res) => {
+app.get("/api/get_invoice/:id",optionalAuth, async (req, res) => {
   try {
     const id = req.params.id;
 
@@ -635,7 +635,7 @@ app.put("/api/update_invoices/:id",optionalAuth,upload.single("logo"), async (re
 
   try {
     console.log(req.body);
-console.log(req.body.items);
+    console.log(req.body.items);
     const invoiceId = req.params.id;
     const data = req.body;
     // const userId = req.user.id;
