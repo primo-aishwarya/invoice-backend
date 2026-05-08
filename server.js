@@ -571,7 +571,7 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
 
 
 // ================= GET INVOICE =================
-app.get("/api/get_invoice/:id", async (req, res) => {
+app.get("/api/get_invoice/:id",authMiddleware, async (req, res) => {
   try {
     const id = req.params.id;
 
