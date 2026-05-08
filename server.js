@@ -110,6 +110,56 @@ const allowedOrigins = [
   'https://invoicelabs.in'
 ];
 
+const checkInvoiceAccess = async (req, res, next) => {
+
+  try {
+
+    const id = req.params.id;
+
+    const [rows] = await db.promise().query(
+      "SELECT * FROM invoice WHERE id = ?",
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "Invoice not found"
+      });
+    }
+
+    const invoice = rows[0];
+
+    // invoice ko req me store kar do
+    req.invoice = invoice;
+
+    // private invoice
+    if (invoice.user_id) {
+
+      if (!req.user) {
+        return res.status(401).json({
+          message: "Login required"
+        });
+      }
+
+      if (invoice.user_id != req.user.id) {
+        return res.status(403).json({
+          message: "Unauthorized access"
+        });
+      }
+    }
+
+    next();
+
+  } catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
 
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -571,6 +621,44 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
 
 
 // ================= GET INVOICE =================
+app.get(
+  "/api/get_invoice/:id",
+  optionalAuth,
+  checkInvoiceAccess,
+  async (req, res) => {
+
+    try {
+
+      const invoice = req.invoice;
+
+      const [productResult] = await db.promise().query(
+        "SELECT * FROM products WHERE invoice = ?",
+        [invoice.id]
+      );
+
+      const baseUrl =
+        req.protocol + "://" + req.get("host");
+
+      invoice.items = productResult;
+
+      invoice.publicUrl =
+        `${baseUrl}/invoicedetail/${invoice.public_token}`;
+
+      invoice.publicToken =
+        invoice.public_token;
+
+      res.json(invoice);
+
+    } catch (err) {
+
+      console.log(err);
+
+      res.status(500).json({
+        message: err.message
+      });
+    }
+  }
+);
 /*app.get("/api/get_invoice/:id",optionalAuth, async (req, res) => {
   try {
     const id = req.params.id;
@@ -607,7 +695,7 @@ app.get("/api/invoicedetail/:token", async (req, res) => {
   }
 });*/
 
-app.get("/api/get_invoice/:id", async (req, res) => {
+/*app.get("/api/get_invoice/:id", async (req, res) => {
 
   try {
 
@@ -626,31 +714,21 @@ app.get("/api/get_invoice/:id", async (req, res) => {
 
     const invoice = invoiceResult[0];
 
-    // =========================================
-    // PRIVATE INVOICE => LOGIN REQUIRED
-    // =========================================
-
+   
     if (invoice.user_id) {
 
-      // login nahi hai
       if (!req.user) {
         return res.status(401).json({
           message: "Login required"
         });
       }
 
-      // dusra user access na kare
       if (invoice.user_id != req.user.id) {
         return res.status(403).json({
           message: "Unauthorized access"
         });
       }
     }
-
-    // =========================================
-    // GET PRODUCTS
-    // =========================================
-
     const [productResult] = await db.promise().query(
       "SELECT * FROM products WHERE invoice = ?",
       [id]
@@ -676,7 +754,7 @@ app.get("/api/get_invoice/:id", async (req, res) => {
     });
   }
 });
-
+*/
 
 // ================= COUNTRIES =================
 app.get("/api/countries", async (req, res) => {
