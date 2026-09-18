@@ -1153,131 +1153,8 @@ app.use((err, req, res, next) => {
 
 
 /*===========complete profile===================*/
-/*app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
-  try {
-     console.log("BODY:", req.body);
-      console.log("FILE:", req.file);
 
-    const userId = req.user.id;
-    const data = req.body;
-
-    // Required field validation
-    const requiredFields = [
-      "businessName",
-      "businessType",
-      "country",
-      "currency",
-      "phone",
-      "businessEmail",
-      "phoneCountryCode"
-    ];
-
-    for (const field of requiredFields) {
-      if (!data[field] || !data[field].trim()) {
-        return res.status(400).json({
-          status: "error",
-          message: `${field} is required`
-        });
-      }
-    }
-
-    // Logo is required
-    if (!req.file) {
-      return res.status(400).json({
-        status: "error",
-        message: "Logo is required"
-      });
-    }
-
-    let logo = null;
-    let logoUrl = null;
-
-    try {
-      const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
-
-      logoUrl = uploadRes.file_url;
-      logo = uploadRes.file_name || null;
-
-      if (fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-      }
-    } catch (err) {
-      return res.status(500).json({
-        status: "error",
-        message: err.message
-      });
-    }
-
-    const [result] = await db.promise().query(
-      `INSERT INTO organizations
-      (
-        businessName,
-        businessType,
-        country,
-        currency,
-        logo,
-        logo_url,
-        address,
-        phoneCountryCode,
-        phone,
-        businessEmail,
-        website,
-        gstin,
-        pan,
-        bankName,
-        accountHolderName,
-        accountNumber,
-        ifsc,
-        branch,
-        addedBy
-      )
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        data.businessName.trim(),
-        data.businessType.trim(),
-        data.country.trim(),
-        data.currency.trim(),
-        logo,
-        logoUrl,
-        data.address || null,
-        data.phoneCountryCode.trim(),
-        data.phone.trim(),
-        data.businessEmail.trim(),
-        data.website || null,
-        data.gstin || null,
-        data.pan || null,
-        data.bankName || null,
-        data.accountHolderName || null,
-        data.accountNumber || null,
-        data.ifsc || null,
-        data.branch || null,
-        userId
-      ]
-    );
-
-    const businessID = result.insertId;
-
-    res.json({
-      status: "success",
-      business_id: businessID,
-      logo_url: logoUrl
-    });
-
-  } catch (error) {
-    console.log(error);
-
-    res.status(500).json({
-      status: "error",
-      message: error.message
-    });
-  }
-});
-*/
-app.post(
-  "/api/complete-profile",
-  authMiddleware,
-  upload.single("logo"),
-  async (req, res) => {
+/*app.post("/api/complete-profile",authMiddleware,upload.single("logo"),async (req, res) => {
 
     try {
 
@@ -1290,21 +1167,14 @@ app.post(
       // =========================================================
       const [existingProfile] =
         await db.promise().query(
-          `SELECT *
-           FROM organizations
-           WHERE addedBy = ?
-           LIMIT 1`,
-          [userId]
-        );
+          `SELECT * FROM organizations WHERE addedBy = ? LIMIT 1`,[userId]);
 
 
       // =========================================================
       // UPDATE EXISTING PROFILE
       // =========================================================
       if (existingProfile.length > 0) {
-
         const existing = existingProfile[0];
-
         const organizationId = existing.businessID;
 
 
@@ -1357,23 +1227,13 @@ app.post(
         };
 
 
-        for (
-          const [field, value]
-          of Object.entries(requiredFields)
-        ) {
-
-          if (
-            !value ||
-            !String(value).trim()
-          ) {
-
+        for (const [field, value] of Object.entries(requiredFields)) {
+          if (!value || !String(value).trim()) {
             return res.status(400).json({
               status: "error",
               message: `${field} is required`
             });
-
           }
-
         }
 
 
@@ -1905,6 +1765,445 @@ app.post(
       // =========================================================
       // CLEANUP TEMPORARY FILE
       // =========================================================
+
+      if (
+        req.file?.path &&
+        fs.existsSync(
+          req.file.path
+        )
+      ) {
+
+        try {
+
+          fs.unlinkSync(
+            req.file.path
+          );
+
+        } catch (cleanupError) {
+
+          console.log(
+            "TEMP FILE CLEANUP ERROR:",
+            cleanupError.message
+          );
+
+        }
+
+      }
+
+
+      return res.status(500).json({
+
+        status: "error",
+
+        message:
+          error.message
+
+      });
+
+    }
+
+  }
+);*/
+
+app.post("/api/complete-profile",authMiddleware,upload.single("logo"),async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const data = req.body;
+      // =======================================================
+      // CHECK EXISTING PROFILE FIRST
+      // =======================================================
+      const [existingProfile] =
+        await db.promise().query(`SELECT * FROM organizations WHERE addedBy = ? LIMIT 1`,[userId]);
+      // =======================================================
+      // UPDATE EXISTING PROFILE
+      // =======================================================
+      if (existingProfile.length > 0) {
+        const existing = existingProfile[0];
+        const organizationId = existing.businessID;
+        // =====================================================
+        // REQUIRED FIELDS
+        // Request value first,
+        // otherwise existing DB value
+        // =====================================================
+
+        const businessName = data.businessName?.trim() || existing.businessName;
+
+        const businessType = data.businessType?.trim() || existing.businessType;
+
+        const country = data.country?.trim() || existing.country;
+
+        const currency = data.currency?.trim() || existing.currency;
+
+        const phone = data.phone?.trim() || existing.phone;
+
+        const businessEmail = data.businessEmail?.trim() || existing.businessEmail;
+
+        const phoneCountryCode = data.phoneCountryCode?.trim() || existing.phoneCountryCode;
+        // =====================================================
+        // REQUIRED FIELD VALIDATION
+        // =====================================================
+
+        const requiredFields={businessName,businessType,country,currency,phone,businessEmail,phoneCountryCode
+        };
+
+
+        for (const [field, value] of Object.entries(requiredFields)) {
+          if (!value || !String(value).trim()) {
+            return res.status(400).json({
+              status: "error",
+              message: `${field} is required`
+            });
+          }
+        }
+        // =====================================================
+        // PHONE VALIDATION
+        // ONLY DIGITS + EXACTLY 10 DIGITS
+        // =====================================================
+        const phoneRegex = /^\d{10}$/;
+        if (!phoneRegex.test(String(phone).trim())) 
+        {
+          return res.status(400).json({
+            status: "error",
+            message: "Phone number must contain exactly 10 digits"
+          });
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (
+          !emailRegex.test(
+            String(businessEmail).trim()
+          )
+        ) {
+          return res.status(400).json({
+            status: "error",
+            message: "Please enter a valid email address"
+          });
+        }
+
+        // =====================================================
+        // OPTIONAL FIELDS
+        // =====================================================
+
+        const address =
+          data.address !== undefined
+            ? data.address || null
+            : existing.address || null;
+
+
+        const website =
+          data.website !== undefined
+            ? data.website || null
+            : existing.website || null;
+
+
+        const gstin =
+          data.gstin !== undefined
+            ? data.gstin || null
+            : existing.gstin || null;
+
+
+        const pan =
+          data.pan !== undefined
+            ? data.pan || null
+            : existing.pan || null;
+
+
+        const bankName =
+          data.bankName !== undefined
+            ? data.bankName || null
+            : existing.bankName || null;
+
+
+        const accountHolderName =
+          data.accountHolderName !== undefined
+            ? data.accountHolderName || null
+            : existing.accountHolderName || null;
+
+
+        const accountNumber =
+          data.accountNumber !== undefined
+            ? data.accountNumber || null
+            : existing.accountNumber || null;
+
+
+        const ifsc =
+          data.ifsc !== undefined
+            ? data.ifsc || null
+            : existing.ifsc || null;
+
+
+        const branch =
+          data.branch !== undefined
+            ? data.branch || null
+            : existing.branch || null;
+
+
+        // =====================================================
+        // LOGO
+        // Keep old logo if no new logo is uploaded
+        // =====================================================
+
+        let logo = existing.logo || null;
+
+        let logoUrl = existing.logo_url || null;
+
+
+        // =====================================================
+        // NEW LOGO UPLOADED
+        // =====================================================
+
+        if (req.file) {
+          try {
+
+            // -------------------------------------------------
+            // 1. UPLOAD NEW LOGO FIRST
+            // -------------------------------------------------
+
+            const uploadRes =await uploadToFTP(req.file.path,req.file.filename);
+
+            logoUrl = uploadRes.file_url;
+            logo = uploadRes.file_name || null;
+
+            // -------------------------------------------------
+            // 2. DELETE OLD LOGO FROM FTP
+            // -------------------------------------------------
+
+            if (existing.logo) {
+              try {
+                await deleteFromFTP(existing.logo);
+              } catch (deleteError) {
+                // Do not fail profile update
+                // if old image deletion fails
+                console.log(
+                  "OLD LOGO DELETE ERROR:",
+                  deleteError.message
+                );
+              }
+            }
+
+
+            // -------------------------------------------------
+            // 3. DELETE TEMPORARY LOCAL FILE
+            // -------------------------------------------------
+
+            if (fs.existsSync(req.file.path))
+            {
+              fs.unlinkSync(req.file.path);
+            }
+          } catch (err) {
+            // -------------------------------------------------
+            // DELETE TEMPORARY FILE
+            // -------------------------------------------------
+
+            if (req.file?.path && fs.existsSync(req.file.path)) {
+              fs.unlinkSync(
+                req.file.path
+              );
+            }
+            return res.status(500).json({
+              status: "error",
+              message: err.message
+            });
+          }
+        }
+
+
+        // =====================================================
+        // UPDATE DATABASE
+        // =====================================================
+
+        const updateQuery = `
+          UPDATE organizations SET businessName = ?, businessType = ?, country = ?, currency = ?, logo = ?,logo_url = ?,address = ?,phoneCountryCode = ?, phone = ?,businessEmail = ?,
+            website = ?, gstin = ?, pan = ?, bankName = ?, accountHolderName = ?, accountNumber = ?, ifsc = ?, branch = ? WHERE businessID = ? AND addedBy = ?`;
+
+        const updateValues = [businessName,businessType,country,currency,logo,logoUrl,address,
+          phoneCountryCode,phone,businessEmail,website,gstin,pan,bankName,accountHolderName,accountNumber,ifsc,branch,organizationId,userId];
+        await db.promise().query(
+          updateQuery,
+          updateValues
+        );
+        // =====================================================
+        // UPDATE SUCCESS
+        // =====================================================
+        return res.json({
+          status: "success",
+          message: "Profile updated successfully",
+          business_id: organizationId,
+          logo_url:logoUrl
+        });
+      }
+      // =======================================================
+      // CREATE NEW PROFILE
+      // =======================================================
+      // =======================================================
+      // REQUIRED FIELDS
+      // =======================================================
+
+      const requiredFields = [
+        "businessName",
+        "businessType",
+        "country",
+        "currency",
+        "phone",
+        "businessEmail",
+        "phoneCountryCode"
+      ];
+
+
+      // =======================================================
+      // REQUIRED FIELD VALIDATION
+      // =======================================================
+
+      for(const field of requiredFields) {
+        if (data[field] === undefined || data[field] === null ||!String(data[field]).trim()) {
+          return res.status(400).json({
+            status: "error",
+            message:
+              `${field} is required`
+          });
+        }
+      }
+      // =======================================================
+      // PHONE VALIDATION
+      // ONLY DIGITS + EXACTLY 10 DIGITS
+      // =======================================================
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(String(data.phone).trim())
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message:"Phone number must contain exactly 10 digits"
+        });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+      if (
+        !emailRegex.test(
+          String(data.businessEmail).trim()
+        )
+      ) {
+        return res.status(400).json({
+          status: "error",
+          message: "Please enter a valid email address"
+        });
+      }
+      // =======================================================
+      // LOGO REQUIRED FOR NEW PROFILE
+      // =======================================================
+      if (!req.file) {
+        return res.status(400).json({
+          status: "error",
+          message:"Logo is required"
+        });
+      }
+      // =======================================================
+      // UPLOAD NEW LOGO
+      // =======================================================
+      let logo = null;
+      let logoUrl = null;
+      try {
+        const uploadRes = await uploadToFTP(req.file.path,req.file.filename);
+        logoUrl = uploadRes.file_url;
+        logo =uploadRes.file_name || null;
+        // -----------------------------------------------------
+        // DELETE TEMPORARY LOCAL FILE
+        // -----------------------------------------------------
+        if ( fs.existsSync(req.file.path)) {
+          fs.unlinkSync(
+            req.file.path
+          );
+        }
+      } catch (err) {
+        // -----------------------------------------------------
+        // DELETE TEMPORARY LOCAL FILE
+        // -----------------------------------------------------
+        if (req.file?.path &&fs.existsSync(req.file.path )) {
+          fs.unlinkSync(
+            req.file.path
+          );
+        }
+        return res.status(500).json({
+          status: "error",
+          message: err.message
+        });
+      }
+      // =======================================================
+      // INSERT NEW PROFILE
+      // =======================================================
+      const [result] =await db.promise().query(`INSERT INTO organizations(businessName,businessType,country,currency,logo,logo_url,
+            address,phoneCountryCode,phone,businessEmail,website,gstin,pan,bankName,accountHolderName,
+            accountNumber,ifsc,branch,addedBy)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,[
+            data.businessName.trim(),
+            data.businessType.trim(),
+            data.country.trim(),
+            data.currency.trim(),
+
+            logo,
+            logoUrl,
+
+            data.address || null,
+
+            data.phoneCountryCode.trim(),
+            data.phone.trim(),
+            data.businessEmail.trim(),
+
+            data.website || null,
+            data.gstin || null,
+            data.pan || null,
+
+            data.bankName || null,
+            data.accountHolderName || null,
+            data.accountNumber || null,
+            data.ifsc || null,
+            data.branch || null,
+
+            userId
+
+          ]
+
+        );
+
+
+      const businessID =
+        result.insertId;
+
+
+      // =======================================================
+      // CREATE SUCCESS
+      // =======================================================
+
+      return res.json({
+
+        status: "success",
+
+        message:
+          "Profile created successfully",
+
+        business_id:
+          businessID,
+
+        logo_url:
+          logoUrl
+
+      });
+
+
+    } catch (error) {
+
+      // =======================================================
+      // GENERAL ERROR
+      // =======================================================
+
+      console.log(
+        "COMPLETE PROFILE ERROR:",
+        error
+      );
+
+
+      // =======================================================
+      // CLEANUP TEMPORARY FILE
+      // =======================================================
 
       if (
         req.file?.path &&
