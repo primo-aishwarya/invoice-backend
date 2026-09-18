@@ -1245,7 +1245,7 @@ app.post(
       // =========================================================
       if (existingProfile.length > 0) {
         const existing = existingProfile[0];
-        const organizationId = existing.id;
+        const organizationId = existing.businessID;
 
         // ---------------------------------------------------------
         // Required fields:
