@@ -57,11 +57,17 @@ async function deleteFromFTP(fileName) {
   client.ftp.verbose = false;
 
   try {
-    await client.access({
+    /*await client.access({
       host: "invoicelabs.in",
       user: "u575800587.abhishek",
       password: "9M$Lk:m7/>0t",
       secure: false
+    });*/
+    await client.access({
+      host: "invoicelabs.in",
+      user: "u339943298.admin",
+      password: "6$vTHugZLR^",
+      secure: false // FTP = false, FTPS = true
     });
 
     await client.remove(`/uploads/invoices/${fileName}`);
@@ -77,10 +83,16 @@ async function uploadToFTP(localPath, fileName) {
   client.ftp.verbose = false;
   client.ftp.timeout = 10000; // 10 sec
   try {
-    await client.access({
+    /*await client.access({
       host: "invoicelabs.in",
       user: "u575800587.abhishek",
       password: "9M$Lk:m7/>0t",
+      secure: false // FTP = false, FTPS = true
+    });*/
+    await client.access({
+      host: "invoicelabs.in",
+      user: "u339943298.admin",
+      password: "6$vTHugZLR^",
       secure: false // FTP = false, FTPS = true
     });
 
@@ -1087,7 +1099,7 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
   try {
      console.log("BODY:", req.body);
       console.log("FILE:", req.file);
-      
+
     const userId = req.user.id;
     const data = req.body;
 
