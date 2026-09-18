@@ -1223,7 +1223,7 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
 });
 
 
-app.get("/api/complete-profile", authMiddleware, async (req, res) => {
+app.get("/api/business-profile", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
 
