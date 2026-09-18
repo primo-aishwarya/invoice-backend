@@ -1102,7 +1102,7 @@ app.use((err, req, res, next) => {
 
 
 /*===========complete profile===================*/
-app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
+/*app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
   try {
      console.log("BODY:", req.body);
       console.log("FILE:", req.file);
@@ -1221,7 +1221,263 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
     });
   }
 });
+*/
+app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
+  try {
 
+    const userId = req.user.id;
+    const data = req.body;
+
+    // Required field validation
+    const requiredFields = [
+      "businessName",
+      "businessType",
+      "country",
+      "currency",
+      "phone",
+      "businessEmail",
+      "phoneCountryCode"
+    ];
+
+    for (const field of requiredFields) {
+      if (!data[field] || !data[field].trim()) {
+        return res.status(400).json({
+          status: "error",
+          message: `${field} is required`
+        });
+      }
+    }
+
+    // Check existing profile
+    const [existingProfile] = await db.promise().query(
+      `SELECT * FROM organizations WHERE addedBy = ? LIMIT 1`,
+      [userId]
+    );
+
+    let logo = null;
+    let logoUrl = null;
+
+    // --------------------------------
+    // UPLOAD NEW LOGO IF PROVIDED
+    // --------------------------------
+    if (req.file) {
+      try {
+        const uploadRes = await uploadToFTP(
+          req.file.path,
+          req.file.filename
+        );
+
+        logoUrl = uploadRes.file_url;
+        logo = uploadRes.file_name || null;
+
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+
+      } catch (err) {
+        return res.status(500).json({
+          status: "error",
+          message: err.message
+        });
+      }
+    }
+
+    // ==========================================
+    // UPDATE EXISTING PROFILE
+    // ==========================================
+    if (existingProfile.length > 0) {
+
+      const organizationId = existingProfile[0].id;
+
+      let updateQuery;
+      let updateValues;
+
+      // New logo uploaded
+      if (req.file) {
+
+        updateQuery = `
+          UPDATE organizations SET
+            businessName = ?,
+            businessType = ?,
+            country = ?,
+            currency = ?,
+            logo = ?,
+            logo_url = ?,
+            address = ?,
+            phoneCountryCode = ?,
+            phone = ?,
+            businessEmail = ?,
+            website = ?,
+            gstin = ?,
+            pan = ?,
+            bankName = ?,
+            accountHolderName = ?,
+            accountNumber = ?,
+            ifsc = ?,
+            branch = ?
+          WHERE id = ?
+          AND addedBy = ?
+        `;
+
+        updateValues = [
+          data.businessName.trim(),
+          data.businessType.trim(),
+          data.country.trim(),
+          data.currency.trim(),
+          logo,
+          logoUrl,
+          data.address || null,
+          data.phoneCountryCode.trim(),
+          data.phone.trim(),
+          data.businessEmail.trim(),
+          data.website || null,
+          data.gstin || null,
+          data.pan || null,
+          data.bankName || null,
+          data.accountHolderName || null,
+          data.accountNumber || null,
+          data.ifsc || null,
+          data.branch || null,
+          organizationId,
+          userId
+        ];
+
+      } else {
+
+        // No new logo → keep old logo
+        updateQuery = `
+          UPDATE organizations SET
+            businessName = ?,
+            businessType = ?,
+            country = ?,
+            currency = ?,
+            address = ?,
+            phoneCountryCode = ?,
+            phone = ?,
+            businessEmail = ?,
+            website = ?,
+            gstin = ?,
+            pan = ?,
+            bankName = ?,
+            accountHolderName = ?,
+            accountNumber = ?,
+            ifsc = ?,
+            branch = ?
+          WHERE id = ?
+          AND addedBy = ?
+        `;
+
+        updateValues = [
+          data.businessName.trim(),
+          data.businessType.trim(),
+          data.country.trim(),
+          data.currency.trim(),
+          data.address || null,
+          data.phoneCountryCode.trim(),
+          data.phone.trim(),
+          data.businessEmail.trim(),
+          data.website || null,
+          data.gstin || null,
+          data.pan || null,
+          data.bankName || null,
+          data.accountHolderName || null,
+          data.accountNumber || null,
+          data.ifsc || null,
+          data.branch || null,
+          organizationId,
+          userId
+        ];
+      }
+
+      await db.promise().query(updateQuery, updateValues);
+
+      return res.json({
+        status: "success",
+        message: "Profile updated successfully",
+        business_id: organizationId,
+        logo_url: req.file
+          ? logoUrl
+          : existingProfile[0].logo_url
+      });
+    }
+
+    // ==========================================
+    // INSERT NEW PROFILE
+    // ==========================================
+
+    // Logo is required only when creating profile
+    if (!req.file) {
+      return res.status(400).json({
+        status: "error",
+        message: "Logo is required"
+      });
+    }
+
+    const [result] = await db.promise().query(
+      `INSERT INTO organizations
+      (
+        businessName,
+        businessType,
+        country,
+        currency,
+        logo,
+        logo_url,
+        address,
+        phoneCountryCode,
+        phone,
+        businessEmail,
+        website,
+        gstin,
+        pan,
+        bankName,
+        accountHolderName,
+        accountNumber,
+        ifsc,
+        branch,
+        addedBy
+      )
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        data.businessName.trim(),
+        data.businessType.trim(),
+        data.country.trim(),
+        data.currency.trim(),
+        logo,
+        logoUrl,
+        data.address || null,
+        data.phoneCountryCode.trim(),
+        data.phone.trim(),
+        data.businessEmail.trim(),
+        data.website || null,
+        data.gstin || null,
+        data.pan || null,
+        data.bankName || null,
+        data.accountHolderName || null,
+        data.accountNumber || null,
+        data.ifsc || null,
+        data.branch || null,
+        userId
+      ]
+    );
+
+    const businessID = result.insertId;
+
+    return res.json({
+      status: "success",
+      message: "Profile created successfully",
+      business_id: businessID,
+      logo_url: logoUrl
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      status: "error",
+      message: error.message
+    });
+  }
+});
 
 app.get("/api/business-profile", authMiddleware, async (req, res) => {
   try {
