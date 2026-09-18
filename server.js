@@ -1221,3 +1221,61 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
     });
   }
 });
+
+
+app.get("/api/complete-profile", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await db.promise().query(
+      `SELECT
+        o.id,
+        o.businessName,
+        o.businessType,
+        o.country AS country_id,
+        c.country_name AS country,
+        o.currency,
+        o.logo,
+        o.logo_url,
+        o.address,
+        o.phoneCountryCode,
+        o.phone,
+        o.businessEmail,
+        o.website,
+        o.gstin,
+        o.pan,
+        o.bankName,
+        o.accountHolderName,
+        o.accountNumber,
+        o.ifsc,
+        o.branch,
+        o.addedBy
+      FROM organizations o
+      LEFT JOIN countries c ON c.id = o.country
+      WHERE o.addedBy = ?
+      ORDER BY o.id DESC
+      LIMIT 1`,
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "Profile not found"
+      });
+    }
+
+    res.json({
+      status: "success",
+      data: rows[0]
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      status: "error",
+      message: error.message
+    });
+  }
+});
