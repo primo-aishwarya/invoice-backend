@@ -64,7 +64,7 @@ async function deleteFromFTP(fileName) {
       secure: false
     });*/
     await client.access({
-      host: "invoicelabs.in",
+      host: "ftp.invoicelabs.in",
       user: "u339943298.admin",
       password: "6$vTHugZLR^",
       secure: false // FTP = false, FTPS = true
@@ -90,7 +90,7 @@ async function uploadToFTP(localPath, fileName) {
       secure: false // FTP = false, FTPS = true
     });*/
     await client.access({
-      host: "invoicelabs.in",
+      host: "ftp.invoicelabs.in",
       user: "u339943298.admin",
       password: "6$vTHugZLR^",
       secure: false // FTP = false, FTPS = true
