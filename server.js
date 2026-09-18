@@ -1085,6 +1085,9 @@ app.use((err, req, res, next) => {
 /*===========complete profile===================*/
 app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
   try {
+     console.log("BODY:", req.body);
+      console.log("FILE:", req.file);
+      
     const userId = req.user.id;
     const data = req.body;
 
