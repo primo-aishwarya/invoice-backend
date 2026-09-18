@@ -1392,7 +1392,15 @@ app.post(
 
             logoUrl = uploadRes.file_url;
             logo = uploadRes.file_name || null;
-
+             try {
+                  await deleteFromFTP(existing.logo);
+                } catch (deleteError) {
+                  console.log(
+                    "OLD LOGO DELETE ERROR:",
+                    deleteError.message
+                  );
+                }
+              }
             // Delete temporary local file
             if (fs.existsSync(req.file.path)) {
               fs.unlinkSync(req.file.path);
@@ -1525,15 +1533,7 @@ app.post(
         logoUrl = uploadRes.file_url;
         logo = uploadRes.file_name || null;
         if (existing.logo) {
-            try {
-              await deleteFromFTP(existing.logo);
-            } catch (deleteError) {
-              console.log(
-                "OLD LOGO DELETE ERROR:",
-                deleteError.message
-              );
-            }
-          }
+     
         // Delete temporary local file
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
