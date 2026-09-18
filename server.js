@@ -83,12 +83,7 @@ async function uploadToFTP(localPath, fileName) {
   client.ftp.verbose = false;
   client.ftp.timeout = 10000; // 10 sec
   try {
-    /*await client.access({
-      host: "invoicelabs.in",
-      user: "u575800587.abhishek",
-      password: "9M$Lk:m7/>0t",
-      secure: false // FTP = false, FTPS = true
-    });*/
+   
     await client.access({
       host: "ftp.invoicelabs.in",
       user: "u339943298.admin",
@@ -1110,7 +1105,8 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
       "country",
       "currency",
       "phone",
-      "businessEmail"
+      "businessEmail",
+      "phoneCountryCode"
     ];
 
     for (const field of requiredFields) {
@@ -1159,6 +1155,7 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
         logo,
         logo_url,
         address,
+        phoneCountryCode,
         phone,
         businessEmail,
         website,
@@ -1171,7 +1168,7 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
         branch,
         addedBy
       )
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
         data.businessName.trim(),
         data.businessType.trim(),
@@ -1180,6 +1177,7 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
         logo,
         logoUrl,
         data.address || null,
+        data.phoneCountryCode.trim(),
         data.phone.trim(),
         data.businessEmail.trim(),
         data.website || null,
