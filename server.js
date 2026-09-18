@@ -1074,19 +1074,31 @@ app.get("/check-files", (req, res) => {
   });
 });
 
+
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({
+        status: "error",
+        message: "Logo size must not exceed 2 MB"
+      });
+    }
+
     return res.status(400).json({
-      message: err.message
-    });
-  } else if (err) {
-    return res.status(400).json({
+      status: "error",
       message: err.message
     });
   }
+
+  if (err) {
+    return res.status(400).json({
+      status: "error",
+      message: err.message
+    });
+  }
+
   next();
 });
-
 
 
 /*===========complete profile===================*/
