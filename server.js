@@ -1079,3 +1079,73 @@ app.use((err, req, res, next) => {
   }
   next();
 });
+
+
+
+/*===========complete profile===================*/
+
+app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    let logo = null;
+    let logoUrl = null;
+    if (req.file) {
+      try {
+        const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
+        logoUrl = uploadRes.file_url;
+        logo = uploadRes.file_name || null;
+
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }      
+      } catch (err) {
+        return res.status(500).json({
+          message: err.message
+        });
+      }
+    }
+    const data = req.body;
+    // const userId = req.user ? req.user.id : null;
+     const [result] = await db.promise().query(
+      `INSERT INTO organizations
+      (businessName,businessType,country,currency,logo,logo_url,address,phone,
+      businessEmail,website,gstin,pan,bankName,accountHolderName,accountNumber,ifsc,
+      branch,addedBy)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [
+        data.businessName,
+        data.businessType,
+        data.country,
+        data.currency,
+        logo,
+        logoUrl
+        data.address,
+        data.phone,
+        data.businessEmail,
+        data.website,
+        data.gstin,
+        data.pan,
+        data.bankName,
+        data.accountHolderName,
+        data.accountNumber,
+        data.ifsc,
+        data.branch,
+        userId
+      ]
+    );
+
+    const businessID = result.businessID;
+    
+    res.json({
+      status: "success",
+      business_id: businessID,
+      logo_url: logoUrl
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: error.message
+    });
+  }
+});
