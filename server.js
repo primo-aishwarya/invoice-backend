@@ -1083,68 +1083,115 @@ app.use((err, req, res, next) => {
 
 
 /*===========complete profile===================*/
-
 app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (req, res) => {
   try {
     const userId = req.user.id;
+    const data = req.body;
 
-    let logo = null;
-    let logoUrl = null;
-    if (req.file) {
-      try {
-        const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
-        logoUrl = uploadRes.file_url;
-        logo = uploadRes.file_name || null;
+    // Required field validation
+    const requiredFields = [
+      "businessName",
+      "businessType",
+      "country",
+      "currency",
+      "phone",
+      "businessEmail"
+    ];
 
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }      
-      } catch (err) {
-        return res.status(500).json({
-          message: err.message
+    for (const field of requiredFields) {
+      if (!data[field] || !data[field].trim()) {
+        return res.status(400).json({
+          status: "error",
+          message: `${field} is required`
         });
       }
     }
-    const data = req.body;
-    // const userId = req.user ? req.user.id : null;
-     const [result] = await db.promise().query(
+
+    // Logo is required
+    if (!req.file) {
+      return res.status(400).json({
+        status: "error",
+        message: "Logo is required"
+      });
+    }
+
+    let logo = null;
+    let logoUrl = null;
+
+    try {
+      const uploadRes = await uploadToFTP(req.file.path, req.file.filename);
+
+      logoUrl = uploadRes.file_url;
+      logo = uploadRes.file_name || null;
+
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+    } catch (err) {
+      return res.status(500).json({
+        status: "error",
+        message: err.message
+      });
+    }
+
+    const [result] = await db.promise().query(
       `INSERT INTO organizations
-      (businessName,businessType,country,currency,logo,logo_url,address,phone,
-      businessEmail,website,gstin,pan,bankName,accountHolderName,accountNumber,ifsc,
-      branch,addedBy)
+      (
+        businessName,
+        businessType,
+        country,
+        currency,
+        logo,
+        logo_url,
+        address,
+        phone,
+        businessEmail,
+        website,
+        gstin,
+        pan,
+        bankName,
+        accountHolderName,
+        accountNumber,
+        ifsc,
+        branch,
+        addedBy
+      )
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       [
-        data.businessName,
-        data.businessType,
-        data.country,
-        data.currency,
+        data.businessName.trim(),
+        data.businessType.trim(),
+        data.country.trim(),
+        data.currency.trim(),
         logo,
         logoUrl,
-        data.address,
-        data.phone,
-        data.businessEmail,
-        data.website,
-        data.gstin,
-        data.pan,
-        data.bankName,
-        data.accountHolderName,
-        data.accountNumber,
-        data.ifsc,
-        data.branch,
+        data.address || null,
+        data.phone.trim(),
+        data.businessEmail.trim(),
+        data.website || null,
+        data.gstin || null,
+        data.pan || null,
+        data.bankName || null,
+        data.accountHolderName || null,
+        data.accountNumber || null,
+        data.ifsc || null,
+        data.branch || null,
         userId
       ]
     );
 
-    const businessID = result.businessID;
-    
+    const businessID = result.insertId;
+
     res.json({
       status: "success",
       business_id: businessID,
       logo_url: logoUrl
     });
+
   } catch (error) {
     console.log(error);
+
     res.status(500).json({
+      status: "error",
       message: error.message
     });
   }
