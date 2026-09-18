@@ -1228,8 +1228,7 @@ app.post(
   upload.single("logo"),
   async (req, res) => {
     try {
-      console.log("BODY:", req.body);
-      console.log("FILE:", req.file);
+     
 
       const userId = req.user.id;
       const data = req.body;
