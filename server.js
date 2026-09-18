@@ -1229,7 +1229,7 @@ app.get("/api/business-profile", authMiddleware, async (req, res) => {
 
     const [rows] = await db.promise().query(
       `SELECT
-        o.id,
+        o.businessID,
         o.businessName,
         o.businessType,
         o.country AS country_id,
@@ -1253,7 +1253,7 @@ app.get("/api/business-profile", authMiddleware, async (req, res) => {
       FROM organizations o
       LEFT JOIN countries c ON c.id = o.country
       WHERE o.addedBy = ?
-      ORDER BY o.id DESC
+      ORDER BY o.businessID DESC
       LIMIT 1`,
       [userId]
     );
