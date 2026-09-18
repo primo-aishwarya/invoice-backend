@@ -1119,7 +1119,7 @@ app.post("/api/complete-profile", authMiddleware, upload.single("logo"), async (
         data.country,
         data.currency,
         logo,
-        logoUrl
+        logoUrl,
         data.address,
         data.phone,
         data.businessEmail,
