@@ -109,7 +109,41 @@ async function uploadToFTP(localPath, fileName) {
   }
 }
 
+async function deleteFromFTP(fileName) {
+  if (!fileName) return;
 
+  const client = new ftp.Client();
+  client.ftp.verbose = false;
+  client.ftp.timeout = 10000;
+
+  try {
+    await client.access({
+      host: "ftp.invoicelabs.in",
+      user: "u339943298.admin",
+      password: "6$vTHugZLR^",
+      secure: false
+    });
+
+    const remotePath = `/uploads/invoices/${fileName}`;
+
+    await client.remove(remotePath);
+
+    console.log("Old logo deleted from FTP:", fileName);
+
+    client.close();
+  } catch (err) {
+    client.close();
+
+    // File already doesn't exist -> don't fail the whole request
+    if (err.code === 550) {
+      console.log("Old logo not found on FTP:", fileName);
+      return;
+    }
+
+    console.log("FTP delete error:", err);
+    throw err;
+  }
+}
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
@@ -1490,7 +1524,16 @@ app.post(
 
         logoUrl = uploadRes.file_url;
         logo = uploadRes.file_name || null;
-
+        if (existing.logo) {
+            try {
+              await deleteFromFTP(existing.logo);
+            } catch (deleteError) {
+              console.log(
+                "OLD LOGO DELETE ERROR:",
+                deleteError.message
+              );
+            }
+          }
         // Delete temporary local file
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
